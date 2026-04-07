@@ -41,18 +41,18 @@ export enum InferenceChiSquareHistologicalTypes {
 }
 
 export enum InferenceChiSquarePersistence {
-    Ano = 'Ano',
-    Ne = 'Ne',
+    Ano = 'yes',
+    Ne = 'no',
 }
 
 export enum InferenceChiSquareRecurrence {
-    Ano = 'Ano',
-    Ne = 'Ne',
+    Ano = 'yes',
+    Ne = 'no',
 }
 
 export enum InferenceChiSquareState {
-    Žije = 'Žije',
-    Zemřel = 'Zemřel',
+    Žije = 'alive',
+    Zemřel = 'deceased',
 }
 
 export enum NonParametricTestType {

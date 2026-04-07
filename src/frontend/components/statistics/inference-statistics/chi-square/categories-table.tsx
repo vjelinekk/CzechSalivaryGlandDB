@@ -24,11 +24,8 @@ const CategoriesTable: React.FC<CategoriesTableProps> = ({
     const { t } = useTranslation()
 
     const getDisplayLabel = (itemKey: string): string => {
-        if (activeTab === InferenceChiSquareCategories.histologicalTypes) {
-            const translated = t(itemKey)
-            return translated !== itemKey ? translated : itemKey
-        }
-        return itemKey
+        const translated = t(itemKey)
+        return translated !== itemKey ? translated : itemKey
     }
 
     // Funkce pro kontrolu, zda je položka vybrána v dané kategorii
