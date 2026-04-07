@@ -1033,7 +1033,7 @@ const getTTestGroupData = async (group: {
             ? ' AND ' + filters.conditions.join(' AND ')
             : ''
 
-    const query = `SELECT DISTINCT p.id FROM ${TableNames.patient} p ${joinClause}WHERE p.tumor_type = 'malignant' ${whereClause}`
+    const query = `SELECT DISTINCT p.id FROM ${TableNames.patient} p ${joinClause} WHERE p.tumor_type = 'malignant' ${whereClause}`
 
     const patients = await runQueryAll<PatientEntity>(query, filters.params)
 

@@ -17,9 +17,10 @@ const TTest: React.FC = () => {
         Record<number, Record<InferenceChiSquareCategories, string[]>>
     >({})
 
-    const [tTestData, setTTestData] = useState<NonParametricTestData | null>(
-        null
-    )
+    const [tTestData, setTTestData] = useState<NonParametricTestData>({
+        group1: [],
+        group2: [],
+    })
     const [selectedTestType, setSelectedTestType] =
         useState<NonParametricTestType>(NonParametricTestType.TWO_TAILED)
     const [selectedValue, setSelectedValue] = useState<NonParametricTestValue>(
@@ -66,8 +67,6 @@ const TTest: React.FC = () => {
 
         if (Object.keys(selectedCategories).length === 2) {
             fetchTTestData()
-        } else {
-            setTTestData(null)
         }
     }, [selectedCategories])
 
@@ -96,16 +95,14 @@ const TTest: React.FC = () => {
                 title="Hodnota pro analýzu"
             />
 
-            {tTestData && (
-                <NonParametricTestCalculator
-                    selectedTestType={selectedTestType}
-                    selectedValue={selectedValue}
-                    nonParametricTestData={tTestData}
-                    title="Výpočet T-Testu"
-                    calculateFunction={calculateTTest}
-                    testName="T-Test"
-                />
-            )}
+            <NonParametricTestCalculator
+                selectedTestType={selectedTestType}
+                selectedValue={selectedValue}
+                nonParametricTestData={tTestData}
+                title="Výpočet T-Testu"
+                calculateFunction={calculateTTest}
+                testName="T-Test"
+            />
         </Box>
     )
 }
