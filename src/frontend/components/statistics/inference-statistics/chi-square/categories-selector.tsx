@@ -12,7 +12,7 @@ import {
     Tab,
     CircularProgress,
 } from '@mui/material'
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import {
     InferenceChiSquareCategories,
     InferenceChiSquareHistologicalTypes,
@@ -36,6 +36,7 @@ interface CategoriesSelectorProps {
         >
     >
     categoryPrefix?: string
+    tnmEditionId?: number
 }
 
 const CategoriesSelector: React.FC<CategoriesSelectorProps> = ({
@@ -43,8 +44,9 @@ const CategoriesSelector: React.FC<CategoriesSelectorProps> = ({
     numberOfCategories,
     setSelectedCategories,
     categoryPrefix = 'Kategorie',
+    tnmEditionId,
 }) => {
-    const { tOptions, nOptions, mOptions, isLoading: tnmLoading } = useTnmData()
+    const { tOptions, nOptions, mOptions, isLoading: tnmLoading } = useTnmData(tnmEditionId)
 
     // State for the active category tab
     const [activeTab, setActiveTab] = useState<InferenceChiSquareCategories>(
@@ -56,6 +58,12 @@ const CategoriesSelector: React.FC<CategoriesSelectorProps> = ({
         useState<
             Record<number, Record<InferenceChiSquareCategories, string[]>>
         >({})
+
+    // Reset all selections when edition changes
+    useEffect(() => {
+        setInternalSelectedCategories({})
+        setSelectedCategories({})
+    }, [tnmEditionId])
 
     // Create array of category keys for tabs
     const categoryKeys = Object.values(InferenceChiSquareCategories)

@@ -86,10 +86,12 @@ declare global {
                 columnSelectedCategories: Record<
                     number,
                     Record<InferenceChiSquareCategoriesEnum, string[]>
-                >
+                >,
+                tnmEditionId?: number
             ) => Promise<number[][]>
             getTTestData: (
-                selectedGroups: ITTestGroupsDto
+                selectedGroups: ITTestGroupsDto,
+                tnmEditionId?: number
             ) => Promise<NonParametricTestDataDto>
             getActiveTnmEdition: () => Promise<TnmEditionDto | null>
             getTnmEditionById: (

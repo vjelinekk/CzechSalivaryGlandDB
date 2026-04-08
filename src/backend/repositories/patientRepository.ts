@@ -841,7 +841,8 @@ export const getChiSquareContingencyTable = async (
     columnSelectedCategories: Record<
         number,
         Record<InferenceChiSquareCategories, string[]>
-    >
+    >,
+    tnmEditionId?: number
 ): Promise<number[][]> => {
     const contingencyTable = Array.from({ length: rows }, () =>
         Array(columns).fill(0)
@@ -852,7 +853,7 @@ export const getChiSquareContingencyTable = async (
             const rowData = rowSelectedCategories[i]
             const columnData = columnSelectedCategories[j]
             if (rowData && columnData) {
-                const count = await getChiSquareCount(rowData, columnData)
+                const count = await getChiSquareCount(rowData, columnData, tnmEditionId)
                 contingencyTable[i][j] = count
             }
         }
@@ -863,10 +864,11 @@ export const getChiSquareContingencyTable = async (
 
 const getChiSquareCount = async (
     rowData: Record<InferenceChiSquareCategories, string[]>,
-    columnData: Record<InferenceChiSquareCategories, string[]>
+    columnData: Record<InferenceChiSquareCategories, string[]>,
+    editionId?: number
 ): Promise<number> => {
-    const rowFilters = collectCategoryFilters(rowData)
-    const colFilters = collectCategoryFilters(columnData)
+    const rowFilters = collectCategoryFilters(rowData, editionId)
+    const colFilters = collectCategoryFilters(columnData, editionId)
 
     // Deduplicate joins across row and column filters
     const allJoins = [...rowFilters.joins]
@@ -911,7 +913,8 @@ const convertValues = (
 
 const buildCategoryFilter = (
     category: InferenceChiSquareCategories,
-    values: string[]
+    values: string[],
+    editionId?: number
 ): CategoryQueryFragment => {
     const converted = convertValues(category, values)
     const placeholders = converted.map(() => '?').join(', ')
@@ -932,8 +935,10 @@ const buildCategoryFilter = (
                     `JOIN ${TableNames.patientStaging} ps ON ps.id_patient = p.id`,
                     `JOIN ${TableNames.tnmValueDefinition} tvd_t ON tvd_t.id = ps.clinical_t_id`,
                 ],
-                condition: `tvd_t.code IN (${placeholders})`,
-                params: converted,
+                condition: editionId
+                    ? `tvd_t.code IN (${placeholders}) AND ps.id_edition = ?`
+                    : `tvd_t.code IN (${placeholders})`,
+                params: editionId ? [...converted, editionId] : converted,
             }
         case InferenceChiSquareCategories.nClassification:
             return {
@@ -941,8 +946,10 @@ const buildCategoryFilter = (
                     `JOIN ${TableNames.patientStaging} ps ON ps.id_patient = p.id`,
                     `JOIN ${TableNames.tnmValueDefinition} tvd_n ON tvd_n.id = ps.clinical_n_id`,
                 ],
-                condition: `tvd_n.code IN (${placeholders})`,
-                params: converted,
+                condition: editionId
+                    ? `tvd_n.code IN (${placeholders}) AND ps.id_edition = ?`
+                    : `tvd_n.code IN (${placeholders})`,
+                params: editionId ? [...converted, editionId] : converted,
             }
         case InferenceChiSquareCategories.mClassification:
             return {
@@ -950,8 +957,10 @@ const buildCategoryFilter = (
                     `JOIN ${TableNames.patientStaging} ps ON ps.id_patient = p.id`,
                     `JOIN ${TableNames.tnmValueDefinition} tvd_m ON tvd_m.id = ps.clinical_m_id`,
                 ],
-                condition: `tvd_m.code IN (${placeholders})`,
-                params: converted,
+                condition: editionId
+                    ? `tvd_m.code IN (${placeholders}) AND ps.id_edition = ?`
+                    : `tvd_m.code IN (${placeholders})`,
+                params: editionId ? [...converted, editionId] : converted,
             }
         case InferenceChiSquareCategories.persistence:
             return {
@@ -975,7 +984,8 @@ const buildCategoryFilter = (
 }
 
 const collectCategoryFilters = (
-    data: Record<InferenceChiSquareCategories, string[]>
+    data: Record<InferenceChiSquareCategories, string[]>,
+    editionId?: number
 ): { joins: string[]; conditions: string[]; params: unknown[] } => {
     const allJoins: string[] = []
     const conditions: string[] = []
@@ -986,7 +996,8 @@ const collectCategoryFilters = (
         if (filteredValues.length > 0) {
             const fragment = buildCategoryFilter(
                 category as InferenceChiSquareCategories,
-                filteredValues
+                filteredValues,
+                editionId
             )
             for (const join of fragment.joins) {
                 if (!allJoins.includes(join)) {
@@ -1002,10 +1013,11 @@ const collectCategoryFilters = (
 }
 
 export const getTTestData = async (
-    groups: ITTestGroupsDto
+    groups: ITTestGroupsDto,
+    tnmEditionId?: number
 ): Promise<NonParametricTestDataDto> => {
-    const group1Data = await getTTestGroupData(groups.first)
-    const group2Data = await getTTestGroupData(groups.second)
+    const group1Data = await getTTestGroupData(groups.first, tnmEditionId)
+    const group2Data = await getTTestGroupData(groups.second, tnmEditionId)
 
     return {
         group1: group1Data,
@@ -1013,17 +1025,21 @@ export const getTTestData = async (
     }
 }
 
-const getTTestGroupData = async (group: {
-    histologicalTypes: string[]
-    tClassification: string[]
-    nClassification: string[]
-    mClassification: string[]
-    persistence: string[]
-    recurrence: string[]
-    state: string[]
-}): Promise<PatientDto[]> => {
+const getTTestGroupData = async (
+    group: {
+        histologicalTypes: string[]
+        tClassification: string[]
+        nClassification: string[]
+        mClassification: string[]
+        persistence: string[]
+        recurrence: string[]
+        state: string[]
+    },
+    editionId?: number
+): Promise<PatientDto[]> => {
     const filters = collectCategoryFilters(
-        group as Record<InferenceChiSquareCategories, string[]>
+        group as Record<InferenceChiSquareCategories, string[]>,
+        editionId
     )
 
     const joinClause =
