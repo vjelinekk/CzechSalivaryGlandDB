@@ -167,14 +167,18 @@ const TnmStatistics: React.FC<TnmStatisticsProps> = ({ patientIds }) => {
                                         `${name}: ${(percent * 100).toFixed(0)}%`
                                     }
                                 >
-                                    {Object.entries(
-                                        clinical?.stage || {}
-                                    ).map((_, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={COLORS[index % COLORS.length]}
-                                        />
-                                    ))}
+                                    {Object.entries(clinical?.stage || {}).map(
+                                        (_, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={
+                                                    COLORS[
+                                                        index % COLORS.length
+                                                    ]
+                                                }
+                                            />
+                                        )
+                                    )}
                                 </Pie>
                                 <Tooltip
                                     formatter={(value) => [

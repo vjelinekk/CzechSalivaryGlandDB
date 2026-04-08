@@ -8,7 +8,13 @@ import {
 import CategoriesSelector from '../../chi-square/categories-selector'
 import NonParametricTestTailSelector from '../non-parametric-test-tail-selector'
 import NonParametricTestValueSelector from '../non-parametric-test-value-selector'
-import { Box, Paper, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import {
+    Box,
+    Paper,
+    Typography,
+    ToggleButton,
+    ToggleButtonGroup,
+} from '@mui/material'
 import NonParametricTestCalculator from '../non-parametric-test-calculator'
 import { calculateTTest } from '../../../../../utils/statistics/calculateTTest'
 import { TnmEdition } from '../../../../../types'
@@ -35,7 +41,8 @@ const TTest: React.FC = () => {
     useEffect(() => {
         window.api.getAllTnmEditions().then((eds: TnmEdition[]) => {
             setEditions(eds)
-            const active = eds.find((e) => e.is_active)?.id ?? eds[0]?.id ?? null
+            const active =
+                eds.find((e) => e.is_active)?.id ?? eds[0]?.id ?? null
             setSelectedTnmEditionId(active)
         })
     }, [])

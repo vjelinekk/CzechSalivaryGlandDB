@@ -99,7 +99,8 @@ const FisherExactTest: React.FC = () => {
     useEffect(() => {
         window.api.getAllTnmEditions().then((eds: TnmEdition[]) => {
             setEditions(eds)
-            const active = eds.find((e) => e.is_active)?.id ?? eds[0]?.id ?? null
+            const active =
+                eds.find((e) => e.is_active)?.id ?? eds[0]?.id ?? null
             setSelectedTnmEditionId(active)
         })
     }, [])
@@ -154,7 +155,13 @@ const FisherExactTest: React.FC = () => {
         }
 
         fetchChiSquareData()
-    }, [rowSelectedCategories, columnSelectedCategories, rows, columns, selectedTnmEditionId])
+    }, [
+        rowSelectedCategories,
+        columnSelectedCategories,
+        rows,
+        columns,
+        selectedTnmEditionId,
+    ])
 
     // Handle cell value changes
     const handleCellChange = (

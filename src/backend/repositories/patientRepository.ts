@@ -941,7 +941,11 @@ export const getChiSquareContingencyTable = async (
             const rowData = rowSelectedCategories[i]
             const columnData = columnSelectedCategories[j]
             if (rowData && columnData) {
-                const count = await getChiSquareCount(rowData, columnData, tnmEditionId)
+                const count = await getChiSquareCount(
+                    rowData,
+                    columnData,
+                    tnmEditionId
+                )
                 contingencyTable[i][j] = count
             }
         }

@@ -46,7 +46,12 @@ const CategoriesSelector: React.FC<CategoriesSelectorProps> = ({
     categoryPrefix = 'Kategorie',
     tnmEditionId,
 }) => {
-    const { tOptions, nOptions, mOptions, isLoading: tnmLoading } = useTnmData(tnmEditionId)
+    const {
+        tOptions,
+        nOptions,
+        mOptions,
+        isLoading: tnmLoading,
+    } = useTnmData(tnmEditionId)
 
     // State for the active category tab
     const [activeTab, setActiveTab] = useState<InferenceChiSquareCategories>(
