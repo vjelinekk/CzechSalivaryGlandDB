@@ -119,6 +119,12 @@ contextBridge.exposeInMainWorld('api', {
             tnmEditionId,
         ])
     },
+    getTnmDistribution: (patientIds: number[], editionId: number) => {
+        return ipcRenderer.invoke(ipcAPIGetChannels.getTnmDistribution, [
+            patientIds,
+            editionId,
+        ])
+    },
     getActiveTnmEdition: () => {
         return ipcRenderer.invoke(ipcAPIGetChannels.getActiveTnmEdition)
     },

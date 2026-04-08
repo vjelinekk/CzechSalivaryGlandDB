@@ -35,5 +35,6 @@ export {
     getPlannedPatientsBetweenDates,
     getChiSquareContingencyTable,
     getTTestData,
+    getTnmDistribution,
     savePatient,
 } from '../repositories/patientRepository'

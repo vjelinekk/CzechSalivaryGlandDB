@@ -831,6 +831,94 @@ const getLastFollowUpDate = (row: {
     return null
 }
 
+export const getTnmDistribution = async (
+    patientIds: number[],
+    editionId: number
+): Promise<{
+    clinical: {
+        t: Record<string, number>
+        n: Record<string, number>
+        m: Record<string, number>
+        stage: Record<string, number>
+    }
+    pathological: {
+        t: Record<string, number>
+        n: Record<string, number>
+        m: Record<string, number>
+        stage: Record<string, number>
+    }
+}> => {
+    const empty = { t: {}, n: {}, m: {}, stage: {} }
+    if (patientIds.length === 0) {
+        return { clinical: empty, pathological: { ...empty } }
+    }
+
+    const placeholders = patientIds.map(() => '?').join(', ')
+    const query = `
+        SELECT
+            tvd_ct.code  AS clinical_t,
+            tvd_cn.code  AS clinical_n,
+            tvd_cm.code  AS clinical_m,
+            tvd_cg.code  AS clinical_stage,
+            tvd_pt.code  AS pathological_t,
+            tvd_pn.code  AS pathological_n,
+            tvd_pm.code  AS pathological_m,
+            tvd_pg.code  AS pathological_stage
+        FROM ${TableNames.patientStaging} ps
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_ct ON tvd_ct.id = ps.clinical_t_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_cn ON tvd_cn.id = ps.clinical_n_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_cm ON tvd_cm.id = ps.clinical_m_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_cg ON tvd_cg.id = ps.clinical_grade_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pt ON tvd_pt.id = ps.pathological_t_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pn ON tvd_pn.id = ps.pathological_n_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pm ON tvd_pm.id = ps.pathological_m_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pg ON tvd_pg.id = ps.pathological_grade_id
+        WHERE ps.id_patient IN (${placeholders}) AND ps.id_edition = ?
+    `
+
+    type Row = {
+        clinical_t: string | null
+        clinical_n: string | null
+        clinical_m: string | null
+        clinical_stage: string | null
+        pathological_t: string | null
+        pathological_n: string | null
+        pathological_m: string | null
+        pathological_stage: string | null
+    }
+
+    const rows = await runQueryAll<Row>(query, [...patientIds, editionId])
+
+    const inc = (obj: Record<string, number>, key: string | null) => {
+        if (key) obj[key] = (obj[key] || 0) + 1
+    }
+
+    const ct: Record<string, number> = {}
+    const cn: Record<string, number> = {}
+    const cm: Record<string, number> = {}
+    const cstage: Record<string, number> = {}
+    const pt: Record<string, number> = {}
+    const pn: Record<string, number> = {}
+    const pm: Record<string, number> = {}
+    const pstage: Record<string, number> = {}
+
+    for (const row of rows) {
+        inc(ct, row.clinical_t)
+        inc(cn, row.clinical_n)
+        inc(cm, row.clinical_m)
+        inc(cstage, row.clinical_stage)
+        inc(pt, row.pathological_t)
+        inc(pn, row.pathological_n)
+        inc(pm, row.pathological_m)
+        inc(pstage, row.pathological_stage)
+    }
+
+    return {
+        clinical: { t: ct, n: cn, m: cm, stage: cstage },
+        pathological: { t: pt, n: pn, m: pm, stage: pstage },
+    }
+}
+
 export const getChiSquareContingencyTable = async (
     rows: number,
     columns: number,

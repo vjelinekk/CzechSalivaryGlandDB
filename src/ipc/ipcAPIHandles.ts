@@ -10,6 +10,7 @@ import {
     getPlannedPatientsBetweenDates,
     getChiSquareContingencyTable,
     getTTestData,
+    getTnmDistribution,
 } from '../backend/services/patientService'
 import {
     deletePatientFromStudy,
@@ -155,6 +156,14 @@ ipcMain.handle(
     async (event, args) => {
         const [selectedGroups, tnmEditionId] = args
         return await getTTestData(selectedGroups, tnmEditionId)
+    }
+)
+
+ipcMain.handle(
+    ipcAPIGetChannels.getTnmDistribution,
+    async (event, args) => {
+        const [patientIds, editionId] = args
+        return await getTnmDistribution(patientIds, editionId)
     }
 )
 

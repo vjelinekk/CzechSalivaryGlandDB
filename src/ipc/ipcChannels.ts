@@ -31,6 +31,7 @@ export enum ipcAPIGetChannels {
     getPlannedPatientsBetweenDates = 'getPlannedPatientsBetweenDates',
     getChiSquareData = 'getChiSquareData',
     getTTestData = 'getTTestData',
+    getTnmDistribution = 'getTnmDistribution',
     getActiveTnmEdition = 'getActiveTnmEdition',
     getAllTnmEditions = 'getAllTnmEditions',
     getTnmEditionById = 'getTnmEditionById',
