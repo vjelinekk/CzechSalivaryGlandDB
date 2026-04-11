@@ -73,8 +73,8 @@ echo '{
     "survival_probability_3year": 0.67,
     "survival_probability_5year": 0.52,
     "top_risk_factors": [
-      {"feature": "pathological_n_id", "importance": 0.24},
-      {"feature": "tumor_size", "importance": 0.18}
+      {"feature": "lymphatic_invasion", "importance": 0.24},
+      {"feature": "t_stage_3.0", "importance": 0.18}
     ]
   }
 }
@@ -125,35 +125,18 @@ The executable will be created in `dist/ml_engine`.
 
 ## Features Extracted
 
-### Numeric Features (11)
+### Numeric Features (2)
 - age_at_diagnosis
-- tumor_size
-- pack_years
-- cigarettes_per_day
-- number_of_metastatic_lymph_nodes
-- other_malignancy (binary)
-- smokes (binary)
-- alcohol_abuse (binary)
-- lymphovascular_invasion (binary)
-- perineural_invasion (binary)
-- extranodal_extension (binary)
+- positive_node_count
 
-### Categorical Features (16 - one-hot encoded)
-- gender
-- region
-- tumor_location (parotid/submandibular/sublingual)
-- histology_type_id
-- histology_subtype_id
-- therapy_type
-- extent_of_surgical_treatment
-- adjuvant_therapy
-- resection_margin (R0/R1)
-- clinical_t_id
-- clinical_n_id
-- clinical_m_id
-- pathological_t_id
-- pathological_n_id
-- pathological_m_id
+### Binary Features (3 - treated as numeric 0/1)
+- lymphatic_invasion
+- perineural_invasion
+- extranodal_extension
+
+### Categorical Features (2 - one-hot encoded)
+- t_stage (pathological T-stage ID, falls back to clinical if missing)
+- grade (pathological grade ID, falls back to clinical if missing)
 
 ## Risk Score Calculation
 

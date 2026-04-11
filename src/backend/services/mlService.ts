@@ -20,7 +20,6 @@ import { MLTrainingResultDto } from '../../ipc/dtos/MLTrainingResultDto'
 import { MLPredictionResultDto } from '../../ipc/dtos/MLPredictionResultDto'
 import { MLModelInfoDto } from '../../ipc/dtos/MLModelInfoDto'
 import { FormType } from '../constants'
-import { HistologyTypeMapper } from '../mappers/HistologyTypeMapper'
 import { toNum } from '../mappers/utils'
 
 const malignantFormTypes = [
@@ -35,14 +34,24 @@ const malignantFormTypes = [
 const sanitizePatientForML = (patient: PatientDto): MLPatient => {
     return {
         age_at_diagnosis: toNum(patient.vek_pri_diagnoze) ?? undefined,
-        therapy_type: patient.typ_terapie,
-        id_histology_type: HistologyTypeMapper.mapKeyToId(
-            patient.histopatologie_vysledek as string
+        clinical_t_code: patient.t_klasifikace_klinicka as string | null,
+        pathological_t_code: patient.t_klasifikace_patologicka as string | null,
+        clinical_grade_code: patient.tnm_klasifikace_klinicka as string | null,
+        pathological_grade_code: patient.tnm_klasifikace_patologicka as
+            | string
+            | null,
+        lymphatic_invasion: patient.lymfovaskularni_invaze_histopatologie as
+            | string
+            | null,
+        perineural_invasion: patient.perineuralni_invaze_histopatologie as
+            | string
+            | null,
+        positive_node_count: toNum(
+            patient.pocet_lymfatickych_uzlin_s_metastazou_histopatologie
         ),
-        clinical_m_id: toNum(patient.m_klasifikace_klinicka_id),
-        pathological_m_id: toNum(patient.m_klasifikace_patologicka_id),
-        clinical_n_id: toNum(patient.n_klasifikace_klinicka_id),
-        pathological_n_id: toNum(patient.n_klasifikace_patologicka_id),
+        extranodal_extension: patient.extranodalni_sireni_histopatologie as
+            | string
+            | null,
         is_alive: patient.stav === 'alive',
         diagnosis_year: patient.rok_diagnozy
             ? patient.rok_diagnozy.substring(0, 4)

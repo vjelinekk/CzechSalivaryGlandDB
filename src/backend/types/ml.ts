@@ -4,12 +4,14 @@ export type MLAlgorithm = 'rsf' | 'coxph'
 
 export interface MLPatient {
     age_at_diagnosis?: number
-    therapy_type?: string
-    id_histology_type?: number
-    clinical_m_id?: number | null
-    pathological_m_id?: number | null
-    clinical_n_id?: number | null
-    pathological_n_id?: number | null
+    clinical_t_code?: string | null
+    pathological_t_code?: string | null
+    clinical_grade_code?: string | null
+    pathological_grade_code?: string | null
+    lymphatic_invasion?: string | null
+    perineural_invasion?: string | null
+    positive_node_count?: number | null
+    extranodal_extension?: string | null
     is_alive?: boolean
     diagnosis_year?: string
     death_date?: string | null

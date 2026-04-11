@@ -1,8 +1,8 @@
 {
   "mode": "train",
-  "model_type": "overall_survival",
-  "algorithm": "coxph",
-  "model_path": "/tmp/test_survival_model.joblib",
+  "model_type": "recurrence",
+  "algorithm": "rsf",
+  "model_path": "/tmp/test_recurrence_model.joblib",
   "data": {
     "patients": [
       {
