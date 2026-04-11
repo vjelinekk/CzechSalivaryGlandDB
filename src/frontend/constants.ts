@@ -193,29 +193,27 @@ export enum KaplanMeierType {
 }
 
 export const kmGroupColorMap: { [key: string]: string } = {
-    'acinocelulární karcinom': '#FF5733', // Red
-    'sekretorický karcinom': '#33FF57', // Green
-    'mukoepidermoidní karcinom': '#007FFF', // Blue
-    'adenoidně cystický karcinom': '#FFD700', // Gold
-    'polymorfní adenokarcinom': '#8A2BE2', // BlueViolet
-    'epiteliální myoepiteliální karcinom': '#FF4500', // OrangeRed
-    'hyalinizující karcinom ze světlých buněk': '#FFA500', // Orange
-    'bazocelulární adenokarcinom': '#9932CC', // DarkOrchid
-    'sebaceózní adenokarcinom': '#2E8B57', // SeaGreen
-    'intraduktální karcinom': '#FF1493', // DeepPink
-    'salivární karcinom NOS': '#800000', // Maroon
-    'salivární duktální karcinom': '#4169E1', // RoyalBlue
-    'myoepiteliální karcinom': '#A52A2A', // Brown
-    'karcinom z pleomorfniho adenomu': '#00CED1', // DarkTurquoise
-    karcinosarkom: '#FF8C00', // DarkOrange
-    'špatně diferencovaný karcinom: neuroendokrinní a nonneuroendokrinní':
-        '#9400D3', // DarkViolet
-    'lymfoepiteliální karcinom': '#228B22', // ForestGreen
-    'skvamocelulární karcinom': '#FF0000', // Red
-    'mikrosekretorický adenokarcinom': '#7CFC00', // LawnGreen
-    'sklerózující mikrocystický adenokarcinom': '#FF69B4', // HotPink
-    'mucinózní adenokarcinom': '#9932CC', // DarkOrchid
-    asialoblastom: '#4682B4', // SteelBlue
-    'MALT-lymfom': '#808000', // Olive
-    jiné: '#000000', // Black
+    'acinic-cell-carcinoma': '#FF5733', // Red
+    'secretory-carcinoma': '#33FF57', // Green
+    'mucoepidermoid-carcinoma': '#007FFF', // Blue
+    'adenoid-cystic-carcinoma': '#FFD700', // Gold
+    'polymorphous-adenocarcinoma': '#8A2BE2', // BlueViolet
+    'epithelial-myoepithelial-carcinoma': '#FF4500', // OrangeRed
+    'hyalinizing-clear-cell-carcinoma': '#FFA500', // Orange
+    'basal-cell-adenocarcinoma': '#9932CC', // DarkOrchid
+    'sebaceous-adenocarcinoma': '#2E8B57', // SeaGreen
+    'intraductal-carcinoma': '#FF1493', // DeepPink
+    'salivary-carcinoma-nos': '#800000', // Maroon
+    'salivary-duct-carcinoma': '#4169E1', // RoyalBlue
+    'myoepithelial-carcinoma': '#A52A2A', // Brown
+    'carcinoma-ex-pleomorphic-adenoma': '#00CED1', // DarkTurquoise
+    carcinosarcoma: '#FF8C00', // DarkOrange
+    'poorly-differentiated-carcinoma': '#9400D3', // DarkViolet
+    'lymphoepithelial-carcinoma': '#228B22', // ForestGreen
+    'squamous-cell-carcinoma': '#FF0000', // Red
+    'microsecretory-adenocarcinoma': '#7CFC00', // LawnGreen
+    'sclerosing-microcystic-adenocarcinoma': '#FF69B4', // HotPink
+    'mucinous-adenocarcinoma': '#9932CC', // DarkOrchid
+    asialoblastoma: '#4682B4', // SteelBlue
+    'malt-lymphoma': '#808000', // Olive
 }

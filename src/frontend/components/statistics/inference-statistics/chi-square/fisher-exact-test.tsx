@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, Grid, Paper, TextField, Button } from '@mui/material'
+import {
+    Box,
+    Typography,
+    Grid,
+    Paper,
+    TextField,
+    Button,
+    ToggleButton,
+    ToggleButtonGroup,
+} from '@mui/material'
 import CategoriesSelector from './categories-selector'
 import { InferenceChiSquareCategories } from '../../../../enums/statistics.enums'
 import { calculateFishersExact } from '../../../../utils/statistics/calculateFishersExact'
+import { TnmEdition } from '../../../../types'
 
 const FisherExactTest: React.FC = () => {
+    const [editions, setEditions] = useState<TnmEdition[]>([])
+    const [selectedTnmEditionId, setSelectedTnmEditionId] = useState<
+        number | null
+    >(null)
     const rows = 2
     const columns = 2
     // Initialize matrix with rows and columns for sums (rows+1, columns+1)
@@ -83,12 +97,22 @@ const FisherExactTest: React.FC = () => {
     }
 
     useEffect(() => {
+        window.api.getAllTnmEditions().then((eds: TnmEdition[]) => {
+            setEditions(eds)
+            const active =
+                eds.find((e) => e.is_active)?.id ?? eds[0]?.id ?? null
+            setSelectedTnmEditionId(active)
+        })
+    }, [])
+
+    useEffect(() => {
         const fetchChiSquareData = async () => {
             const response = await window.api.getChiSquareData(
                 rows,
                 columns,
                 rowSelectedCategories,
-                columnSelectedCategories
+                columnSelectedCategories,
+                selectedTnmEditionId ?? undefined
             )
 
             // Update matrix with API response
@@ -131,7 +155,13 @@ const FisherExactTest: React.FC = () => {
         }
 
         fetchChiSquareData()
-    }, [rowSelectedCategories, columnSelectedCategories, rows, columns])
+    }, [
+        rowSelectedCategories,
+        columnSelectedCategories,
+        rows,
+        columns,
+        selectedTnmEditionId,
+    ])
 
     // Handle cell value changes
     const handleCellChange = (
@@ -202,15 +232,36 @@ const FisherExactTest: React.FC = () => {
                 Fisherův exaktní test
             </Typography>
 
+            <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                    Verze TNM klasifikace
+                </Typography>
+                <ToggleButtonGroup
+                    value={selectedTnmEditionId}
+                    exclusive
+                    onChange={(_, val) => {
+                        if (val !== null) setSelectedTnmEditionId(val)
+                    }}
+                >
+                    {editions.map((ed) => (
+                        <ToggleButton key={ed.id} value={ed.id}>
+                            {ed.name}
+                        </ToggleButton>
+                    ))}
+                </ToggleButtonGroup>
+            </Paper>
+
             <CategoriesSelector
                 title="Vyberte kategorie pro řádky"
                 numberOfCategories={rows}
                 setSelectedCategories={setRowSelectedCategories}
+                tnmEditionId={selectedTnmEditionId ?? undefined}
             />
             <CategoriesSelector
                 title="Vyberte kategorie pro sloupce"
                 numberOfCategories={columns}
                 setSelectedCategories={setColumnSelectedCategories}
+                tnmEditionId={selectedTnmEditionId ?? undefined}
             />
 
             <Paper elevation={3} sx={{ p: 3 }}>

@@ -86,11 +86,30 @@ declare global {
                 columnSelectedCategories: Record<
                     number,
                     Record<InferenceChiSquareCategoriesEnum, string[]>
-                >
+                >,
+                tnmEditionId?: number
             ) => Promise<number[][]>
             getTTestData: (
-                selectedGroups: ITTestGroupsDto
+                selectedGroups: ITTestGroupsDto,
+                tnmEditionId?: number
             ) => Promise<NonParametricTestDataDto>
+            getTnmDistribution: (
+                patientIds: number[],
+                editionId: number
+            ) => Promise<{
+                clinical: {
+                    t: Record<string, number>
+                    n: Record<string, number>
+                    m: Record<string, number>
+                    stage: Record<string, number>
+                }
+                pathological: {
+                    t: Record<string, number>
+                    n: Record<string, number>
+                    m: Record<string, number>
+                    stage: Record<string, number>
+                }
+            }>
             getActiveTnmEdition: () => Promise<TnmEditionDto | null>
             getTnmEditionById: (
                 editionId: number

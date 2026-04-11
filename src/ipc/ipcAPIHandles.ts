@@ -10,6 +10,7 @@ import {
     getPlannedPatientsBetweenDates,
     getChiSquareContingencyTable,
     getTTestData,
+    getTnmDistribution,
 } from '../backend/services/patientService'
 import {
     deletePatientFromStudy,
@@ -139,22 +140,31 @@ ipcMain.handle(
 )
 
 ipcMain.handle(ipcAPIGetChannels.getChiSquareData, async (event, args) => {
-    const [rows, columns, rowSelectedCateogries, columnSelectedCategories] =
-        args
+    const [
+        rows,
+        columns,
+        rowSelectedCateogries,
+        columnSelectedCategories,
+        tnmEditionId,
+    ] = args
     return await getChiSquareContingencyTable(
         rows,
         columns,
         rowSelectedCateogries,
-        columnSelectedCategories
+        columnSelectedCategories,
+        tnmEditionId
     )
 })
 
-ipcMain.handle(
-    ipcAPIGetChannels.getTTestData,
-    async (event, selectedGroups) => {
-        return await getTTestData(selectedGroups)
-    }
-)
+ipcMain.handle(ipcAPIGetChannels.getTTestData, async (event, args) => {
+    const [selectedGroups, tnmEditionId] = args
+    return await getTTestData(selectedGroups, tnmEditionId)
+})
+
+ipcMain.handle(ipcAPIGetChannels.getTnmDistribution, async (event, args) => {
+    const [patientIds, editionId] = args
+    return await getTnmDistribution(patientIds, editionId)
+})
 
 // TNM Classification Handlers
 ipcMain.handle(ipcAPIGetChannels.getActiveTnmEdition, async () => {
