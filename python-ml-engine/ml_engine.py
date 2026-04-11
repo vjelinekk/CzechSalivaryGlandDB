@@ -144,15 +144,15 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
     # Calculate risk score and probabilities (survival or recurrence based on model type)
     result = model.predict_risk(X, model_type=model_type)
 
-    # Get top risk factors
-    importance = model.get_feature_importance()
+    # Get top risk factors (local for CoxPH, global for RSF)
+    importance = model.get_local_feature_importance(X)
     feature_names = metadata.get('feature_names', [])
 
     if len(importance) == len(feature_names):
-        # Sort by importance descending
+        # Sort by absolute importance descending
         importance_pairs = [(feature_names[i], float(importance[i]))
                            for i in range(len(importance))]
-        importance_pairs.sort(key=lambda x: x[1], reverse=True)
+        importance_pairs.sort(key=lambda x: abs(x[1]), reverse=True)
 
         # Top 3 risk factors
         top_factors = [

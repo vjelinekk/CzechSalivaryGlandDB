@@ -86,7 +86,7 @@ class SurvivalModel:
             y_time: Time to event
             n_repeats: Number of permutations (default 10 for speed)
         """
-        if self.algorithm == 'rsf':
+        if self.algorithm == AlgorithmTypeEnum.RSF:
             # Use permutation importance for Random Survival Forest
             y = np.array(
                 [(bool(event), time) for event, time in zip(y_event, y_time)],
@@ -98,7 +98,7 @@ class SurvivalModel:
                 random_state=42
             )
             self.feature_importance_ = result.importances_mean
-        elif self.algorithm == 'coxph':
+        elif self.algorithm == AlgorithmTypeEnum.COXPH:
             # For Cox PH, use absolute coefficient values
             self.feature_importance_ = np.abs(self.model.coef_)
 
@@ -197,11 +197,29 @@ class SurvivalModel:
         """
         if self.feature_importance_ is not None:
             return self.feature_importance_
-        elif self.algorithm == 'coxph':
+        elif self.algorithm == AlgorithmTypeEnum.COXPH:
             # For CoxPH, can calculate on-the-fly from coefficients
             return np.abs(self.model.coef_)
         else:
             return np.array([])
+
+    def get_local_feature_importance(self, X):
+        """Get local (per-patient) feature importance
+
+        For CoxPH: exact contributions as coef * feature_value for this patient.
+                   Positive = increases risk, negative = decreases risk.
+        For RSF: falls back to global permutation importance (no local support).
+
+        Args:
+            X: Feature matrix for a single patient (1, n_features)
+
+        Returns:
+            numpy array of importance values (n_features,)
+        """
+        if self.algorithm == AlgorithmTypeEnum.COXPH:
+            return self.model.coef_ * X[0]
+        else:
+            return self.get_feature_importance()
 
     def save(self, model_path: str, metadata: TrainResultMetadata, extractor: FeatureExtractor) -> None:
         """
