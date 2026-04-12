@@ -1,5 +1,7 @@
 export interface MLModelMetadataDto {
     c_index: number
+    bootstrap_c_index: number
+    bootstrap_c_index_std: number
     n_samples: number
     n_events: number
     training_date: string

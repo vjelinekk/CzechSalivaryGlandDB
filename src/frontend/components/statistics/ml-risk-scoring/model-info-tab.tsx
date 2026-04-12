@@ -128,6 +128,9 @@ const ModelInfoTab: React.FC = () => {
                                 {t(appTranslationKeys.mlTrainingDate)}
                             </TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>
+                                {t(appTranslationKeys.mlBootstrapCindexTable)}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>
                                 {t(appTranslationKeys.mlCindex)}
                             </TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>
@@ -142,7 +145,7 @@ const ModelInfoTab: React.FC = () => {
                         {models.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={7}
+                                    colSpan={8}
                                     align="center"
                                     sx={{ py: 3 }}
                                 >
@@ -190,6 +193,22 @@ const ModelInfoTab: React.FC = () => {
                                         ).toLocaleString()}
                                     </TableCell>
                                     <TableCell sx={{ fontWeight: 'medium' }}>
+                                        {(
+                                            model.model_metadata
+                                                .bootstrap_c_index * 100
+                                        ).toFixed(1)}
+                                        %{' '}
+                                        <span style={{ color: 'gray', fontSize: '0.75rem' }}>
+                                            ±
+                                            {(
+                                                model.model_metadata
+                                                    .bootstrap_c_index_std *
+                                                100
+                                            ).toFixed(1)}
+                                            %
+                                        </span>
+                                    </TableCell>
+                                    <TableCell color="textSecondary">
                                         {(
                                             model.model_metadata.c_index * 100
                                         ).toFixed(1)}

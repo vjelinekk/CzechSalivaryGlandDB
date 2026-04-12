@@ -49,7 +49,7 @@ class FeatureExtractor:
 
         # Extract target variables first so patients with unresolvable time
         # can be excluded before fitting any preprocessors.
-        y_event, y_time = self._extract_targets(df, model_type)
+        y_event, y_time = self.extract_targets(df, model_type)
 
         # Drop patients whose outcome time could not be determined.
         # Imputing y_time would corrupt the survival model — exclude instead.
@@ -201,7 +201,7 @@ class FeatureExtractor:
 
         return df
 
-    def _extract_targets(self, df, model_type):
+    def extract_targets(self, df, model_type):
         """
         Extract survival target variables
 

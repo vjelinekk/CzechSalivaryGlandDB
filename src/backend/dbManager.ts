@@ -228,6 +228,8 @@ const schemaQueries = [
         model_type TEXT NOT NULL, -- 'overall_survival', 'recurrence'
         algorithm TEXT NOT NULL,  -- 'rsf', 'coxph'
         c_index REAL,
+        bootstrap_c_index REAL,
+        bootstrap_c_index_std REAL,
         n_samples INTEGER,
         n_events INTEGER,
         training_date TEXT,

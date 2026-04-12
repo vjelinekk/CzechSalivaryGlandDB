@@ -27,7 +27,7 @@ from ml_types.model_types import (
     SurvivalPredictionResult,
     RecurrencePredictionResult, ModelInfoResult,
 )
-from survival_model import SurvivalModel
+from survival_model import SurvivalModel, bootstrap_validate
 from validators import validate_input
 from typing import Union
 
@@ -103,12 +103,17 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     # Calculate feature importance (permutation for RSF, coefficients for CoxPH)
     model.calculate_feature_importance(X, y_event, y_time, n_repeats=10)
 
-    # Get performance metrics
+    # Apparent C-index (training set — optimistically biased)
     c_index = model.get_c_index(X, y_event, y_time)
+
+    # Bootstrap .632 C-index — honest generalisation estimate
+    bootstrap = bootstrap_validate(patients, model_type, algorithm, c_index)
 
     # Save model with metadata
     metadata: TrainResultMetadata = {
         'c_index': c_index,
+        'bootstrap_c_index': bootstrap['bootstrap_c_index'],
+        'bootstrap_c_index_std': bootstrap['bootstrap_c_index_std'],
         'n_samples': len(patients),
         'n_events': n_events,
         'training_date': datetime.now().isoformat(),

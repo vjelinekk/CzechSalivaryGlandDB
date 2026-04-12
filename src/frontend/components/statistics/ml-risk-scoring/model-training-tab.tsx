@@ -172,9 +172,24 @@ const ModelTrainingTab: React.FC<ModelTrainingTabProps> = ({
                                 variant="subtitle2"
                                 color="textSecondary"
                             >
-                                {t(appTranslationKeys.mlCindexAccuracy)}
+                                {t(appTranslationKeys.mlBootstrapCindex)}
                             </Typography>
                             <Typography variant="h5">
+                                {(result.bootstrap_c_index * 100).toFixed(1)}%
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                                {t(appTranslationKeys.mlBootstrapCindexStd)}:{' '}
+                                ±{(result.bootstrap_c_index_std * 100).toFixed(1)}%
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                            <Typography
+                                variant="subtitle2"
+                                color="textSecondary"
+                            >
+                                {t(appTranslationKeys.mlCindexAccuracy)}
+                            </Typography>
+                            <Typography variant="h5" color="textSecondary">
                                 {(result.c_index * 100).toFixed(1)}%
                             </Typography>
                         </Grid>

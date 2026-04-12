@@ -55,7 +55,9 @@ export interface MLRiskFactor {
 }
 
 export interface MLTrainResult {
-    c_index: number
+    c_index: number                 // Apparent C-index (training set, optimistically biased)
+    bootstrap_c_index: number       // .632-corrected bootstrap C-index (honest generalisation estimate)
+    bootstrap_c_index_std: number   // Std of raw OOB C-indices across bootstrap iterations
     n_samples: number
     n_events: number
     training_date: string

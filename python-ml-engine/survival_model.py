@@ -3,7 +3,9 @@ Survival analysis models using scikit-survival
 Supports Random Survival Forest and Cox Proportional Hazards
 """
 
+import sys
 import numpy as np
+import pandas as pd
 import joblib
 from sksurv.ensemble import RandomSurvivalForest
 from sksurv.linear_model import CoxPHSurvivalAnalysis
@@ -31,7 +33,7 @@ class SurvivalModel:
 
         if algorithm == AlgorithmTypeEnum.RSF:
             self.model = RandomSurvivalForest(
-                n_estimators=100,
+                n_estimators=500,
                 min_samples_split=10,
                 min_samples_leaf=5,
                 max_depth=5,
@@ -256,3 +258,117 @@ class SurvivalModel:
         survival_model.feature_importance_ = save_dict.get('feature_importance')  # May be None for old models
 
         return survival_model, save_dict['extractor'], save_dict['metadata']
+
+
+def bootstrap_validate(
+    patients: list,
+    model_type: ModelTypeEnum,
+    algorithm: AlgorithmTypeEnum,
+    c_apparent: float,
+    n_bootstrap: int = 200,
+    random_state: int = 42,
+) -> dict:
+    """
+    Estimate generalisation performance via bootstrap and return the .632 corrected C-index.
+
+    Each iteration:
+      1. Draw N patients with replacement (bootstrap sample, ~63.2% unique).
+      2. Out-of-bag (OOB) patients are those never drawn (~36.8%).
+      3. Fit a fresh extractor + model on the bootstrap sample.
+      4. Evaluate C-index on OOB patients.
+
+    The .632 estimator corrects for the pessimistic bias of plain OOB evaluation:
+        C_632 = 0.368 * C_apparent + 0.632 * mean(C_oob)
+
+    Where C_apparent is the training-set C-index (already computed by the caller).
+
+    Returns:
+        {
+          'bootstrap_c_index':     float  — .632-corrected C-index (the main metric),
+          'bootstrap_c_index_std': float  — std of raw OOB C-indices (spread estimate),
+        }
+    """
+    rng = np.random.default_rng(random_state)
+    n = len(patients)
+    oob_c_indices = []
+    skipped = 0
+
+    for iteration in range(n_bootstrap):
+        boot_idx = rng.integers(0, n, size=n)
+        oob_idx = np.setdiff1d(np.arange(n), boot_idx)
+
+        if len(oob_idx) < 5:
+            skipped += 1
+            continue
+
+        boot_patients = [patients[i] for i in boot_idx]
+        oob_patients  = [patients[i] for i in oob_idx]
+
+        try:
+            # Fit a fresh extractor on the bootstrap sample only
+            extractor = FeatureExtractor()
+            X_boot, y_event_boot, y_time_boot, _ = extractor.fit_transform(
+                boot_patients, model_type
+            )
+
+            if sum(y_event_boot) < 2:
+                skipped += 1
+                continue
+
+            # Transform OOB features using the bootstrap-fitted extractor
+            X_oob = extractor.transform(oob_patients)
+
+            # Extract OOB targets (no fitting — extractor already fitted above)
+            oob_df = pd.DataFrame(oob_patients)
+            oob_df = extractor._apply_stage_fallback(oob_df)
+            y_event_oob, y_time_oob = extractor.extract_targets(oob_df, model_type)
+
+            # Drop OOB patients with unresolvable time
+            valid = ~np.isnan(y_time_oob)
+            if valid.sum() < 5 or sum(y_event_oob[valid]) < 2:
+                skipped += 1
+                continue
+
+            X_oob        = X_oob[valid]
+            y_event_oob  = y_event_oob[valid]
+            y_time_oob   = y_time_oob[valid]
+
+            # Fit model on bootstrap sample and evaluate on OOB
+            model = SurvivalModel(algorithm=algorithm)
+            model.fit(X_boot, y_event_boot, y_time_boot)
+            c_oob = model.get_c_index(X_oob, y_event_oob, y_time_oob)
+            oob_c_indices.append(c_oob)
+
+        except Exception as exc:
+            skipped += 1
+            print(
+                f"[bootstrap] Iteration {iteration} skipped: {exc}",
+                file=sys.stderr,
+            )
+
+    if skipped > 0:
+        print(
+            f"[bootstrap] {skipped}/{n_bootstrap} iterations skipped "
+            f"(too few OOB events or model error).",
+            file=sys.stderr,
+        )
+
+    if not oob_c_indices:
+        # Could not complete any iteration — fall back to apparent C-index
+        print(
+            "[bootstrap] No valid OOB iterations — returning apparent C-index as fallback.",
+            file=sys.stderr,
+        )
+        return {
+            'bootstrap_c_index':     float(c_apparent),
+            'bootstrap_c_index_std': 0.0,
+        }
+
+    oob_mean = float(np.mean(oob_c_indices))
+    oob_std  = float(np.std(oob_c_indices))
+    c_632    = float(0.368 * c_apparent + 0.632 * oob_mean)
+
+    return {
+        'bootstrap_c_index':     c_632,
+        'bootstrap_c_index_std': oob_std,
+    }

@@ -11,7 +11,9 @@ class TrainResultMetadata(TypedDict):
     """
     Structure of training result data from ML engine
     """
-    c_index: float
+    c_index: float                  # Apparent C-index (training set, optimistically biased)
+    bootstrap_c_index: float        # .632-corrected bootstrap C-index (honest generalisation estimate)
+    bootstrap_c_index_std: float    # Std of raw OOB C-indices across bootstrap iterations
     n_samples: int
     n_events: int
     training_date: str
