@@ -129,13 +129,17 @@
     "ml-training-in-progress": "Trénování...",
     "ml-train-model": "Trénovat model",
     "ml-training-results": "Výsledky trénování",
-    "ml-cindex-accuracy": "C-index (Přesnost)",
+    "ml-cindex-accuracy": "C-index (trénink)",
+    "ml-bootstrap-cindex": "Bootstrap C-index (.632)",
+    "ml-bootstrap-cindex-std": "Odchylka OOB C-index",
     "ml-number-of-patients": "Počet pacientů",
     "ml-number-of-events": "Počet událostí",
     "ml-training-date": "Datum trénování",
     "ml-active": "Aktivní",
     "ml-model-type": "Typ modelu",
-    "ml-cindex": "C-index",
+    "ml-cindex": "C-index (trénink)",
+    "ml-bootstrap-cindex-table": "Bootstrap C-index",
+    "ml-bootstrap-low-iterations": "Pouze {{n}} z {{total}} bootstrap iterací bylo úspěšných. Data mohou být příliš malá pro spolehlivý odhad.",
     "ml-sample": "Vzorek",
     "ml-actions": "Akce",
     "ml-no-models-trained": "Zatím nebyly natrénovány žádné modely.",
@@ -144,5 +148,6 @@
     "ml-delete-model-title": "Smazat ML model?",
     "ml-delete-model-warning": "Tato akce trvale smaže metadata modelu z databáze i fyzický soubor .joblib z disku. Tuto akci nelze vzít zpět.",
     "ml-delete-cancel": "Zrušit",
-    "ml-delete-model": "Smazat"
+    "ml-delete-model": "Smazat",
+    "ml-bundled-model": "Předtrénovaný"
 }

@@ -5,7 +5,6 @@ Creates realistic mock patient data for train/predict/info modes
 """
 
 import json
-import os
 from pathlib import Path
 
 
@@ -18,24 +17,25 @@ def generate_mock_patients(num_patients=60):
             # Feature 1: Age at diagnosis (50-79 years)
             'age_at_diagnosis': 50 + (i % 30),
 
-            # Feature 2: Therapy type (categorical string)
-            'therapy_type': ['surgery', 'radiotherapy', 'chemoradiotherapy', 'chemotherapy'][i % 4],
+            # Feature 2 & 3: T-stage and overall stage (string codes)
+            'pathological_t_code': ['T1', 'T2', 'T3', 'T4a', 'T4b'][i % 5],
+            'clinical_t_code': ['T1', 'T2', 'T3'][i % 3],  # Fallback with less variation
 
-            # Feature 3: Histology type (IDs 1-24)
-            'id_histology_type': 1 + (i % 24),
+            # Overall stage (stored as grade in staging table)
+            'pathological_grade_code': ['Stage I', 'Stage II', 'Stage III', 'Stage IVA', 'Stage IVB'][i % 5],
+            'clinical_grade_code': ['Stage I', 'Stage II', 'Stage III'][i % 3],  # Fallback
 
-            # Feature 4 & 5: TNM staging (IDs from tnm_value_definition)
-            # M stage: 14=M0, 15=M1
-            'pathological_m_id': 14 if i % 10 != 0 else 15,  # Most M0, some M1
-            'clinical_m_id': 14,  # Fallback for cases without pathological
+            # Feature 4-6: Binary histopathology features
+            'lymphatic_invasion': ['yes', 'no'][i % 2],
+            'perineural_invasion': ['yes', 'no'][(i + 1) % 2],
+            'extranodal_extension': 'yes' if i % 4 == 0 else 'no',
 
-            # N stage: 7=N0, 8=N1, 9=N2a, 10=N2b, 11=N2c, 12=N3a, 13=N3b
-            'pathological_n_id': 7 + (i % 7),
-            'clinical_n_id': 7 + (i % 5),  # Fallback with less variation
+            # Feature 7: Positive node count (0-10)
+            'positive_node_count': i % 11,
 
             # Outcome variables
             'is_alive': i % 3 == 0,  # 1/3 alive, 2/3 dead
-            'diagnosis_year': 2015 + (i % 8),
+            'diagnosis_date': f"20{15 + (i % 8)}-06-15",
             'death_date': None if i % 3 == 0 else f"202{2 + (i % 3)}-06-15",
             'last_follow_up': '2024-01-01' if i % 3 == 0 else f"202{2 + (i % 3)}-06-15",
             'recidive': i % 2 == 0,  # 1/2 recurrence rate (50% → 30 events for 60 patients)
@@ -45,8 +45,8 @@ def generate_mock_patients(num_patients=60):
 
         # For some patients, use clinical stage as primary (no pathological)
         if i % 15 == 0:
-            patient['pathological_m_id'] = None
-            patient['pathological_n_id'] = None
+            patient['pathological_t_code'] = None
+            patient['pathological_grade_code'] = None
 
         mock_patients.append(patient)
 

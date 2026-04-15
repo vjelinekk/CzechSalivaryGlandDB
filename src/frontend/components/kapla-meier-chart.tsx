@@ -68,7 +68,7 @@ const KaplanMeierChart: React.FC<KaplanMeierChartProps> = ({
                         type="stepAfter"
                         data={curveData[group]}
                         dataKey="probability"
-                        name={group}
+                        name={t(group)}
                         stroke={kmGroupColorMap[group]}
                     />
                 ))}

@@ -3,7 +3,11 @@ import * as fs from 'fs'
 import { getAllPatients } from '../repositories/patientRepository'
 import * as mlRepository from '../repositories/mlRepository'
 import { PatientDto } from '../../ipc/dtos/PatientDto'
-import { executePythonML, getModelsDirectory } from '../utils/mlManager'
+import {
+    executePythonML,
+    getBundledModelsDirectory,
+    getModelsDirectory,
+} from '../utils/mlManager'
 import {
     MLTrainInputData,
     MLPredictInputData,
@@ -20,7 +24,6 @@ import { MLTrainingResultDto } from '../../ipc/dtos/MLTrainingResultDto'
 import { MLPredictionResultDto } from '../../ipc/dtos/MLPredictionResultDto'
 import { MLModelInfoDto } from '../../ipc/dtos/MLModelInfoDto'
 import { FormType } from '../constants'
-import { HistologyTypeMapper } from '../mappers/HistologyTypeMapper'
 import { toNum } from '../mappers/utils'
 
 const malignantFormTypes = [
@@ -35,18 +38,26 @@ const malignantFormTypes = [
 const sanitizePatientForML = (patient: PatientDto): MLPatient => {
     return {
         age_at_diagnosis: toNum(patient.vek_pri_diagnoze) ?? undefined,
-        therapy_type: patient.typ_terapie,
-        id_histology_type: HistologyTypeMapper.mapKeyToId(
-            patient.histopatologie_vysledek as string
+        clinical_t_code: patient.t_klasifikace_klinicka as string | null,
+        pathological_t_code: patient.t_klasifikace_patologicka as string | null,
+        clinical_grade_code: patient.tnm_klasifikace_klinicka as string | null,
+        pathological_grade_code: patient.tnm_klasifikace_patologicka as
+            | string
+            | null,
+        lymphatic_invasion: patient.lymfovaskularni_invaze_histopatologie as
+            | string
+            | null,
+        perineural_invasion: patient.perineuralni_invaze_histopatologie as
+            | string
+            | null,
+        positive_node_count: toNum(
+            patient.pocet_lymfatickych_uzlin_s_metastazou_histopatologie
         ),
-        clinical_m_id: toNum(patient.m_klasifikace_klinicka_id),
-        pathological_m_id: toNum(patient.m_klasifikace_patologicka_id),
-        clinical_n_id: toNum(patient.n_klasifikace_klinicka_id),
-        pathological_n_id: toNum(patient.n_klasifikace_patologicka_id),
+        extranodal_extension: patient.extranodalni_sireni_histopatologie as
+            | string
+            | null,
         is_alive: patient.stav === 'alive',
-        diagnosis_year: patient.rok_diagnozy
-            ? patient.rok_diagnozy.substring(0, 4)
-            : undefined,
+        diagnosis_date: patient.rok_diagnozy ?? undefined,
         death_date: patient.datum_umrti,
         last_follow_up: patient.posledni_kontrola,
         recidive: patient.recidiva === 'yes',
@@ -98,6 +109,8 @@ export const trainMLModel = async (
         model_type: modelType,
         algorithm: algorithm,
         c_index: result.c_index,
+        bootstrap_c_index: result.bootstrap_c_index,
+        bootstrap_c_index_std: result.bootstrap_c_index_std,
         n_samples: result.n_samples,
         n_events: result.n_events,
         training_date: result.training_date,
@@ -218,6 +231,8 @@ export const getModelInfo = async (
             id: m.id,
             model_metadata: {
                 c_index: m.c_index,
+                bootstrap_c_index: m.bootstrap_c_index,
+                bootstrap_c_index_std: m.bootstrap_c_index_std,
                 n_samples: m.n_samples,
                 n_events: m.n_events,
                 training_date: m.training_date,
@@ -228,6 +243,7 @@ export const getModelInfo = async (
             model_path: m.model_path,
             model_type: m.model_type,
             is_active: m.is_active === 1,
+            is_bundled: m.is_bundled === 1,
         }))
 }
 
@@ -285,17 +301,82 @@ export const getSavedPrediction = async (
 }
 
 /**
+ * Copies bundled pre-trained models from extraResources to the user models directory
+ * and registers them in the database. Runs once on startup; skipped if already imported.
+ */
+export const initBundledModels = async (): Promise<void> => {
+    if (await mlRepository.hasBundledModels()) return
+
+    const bundledDir = getBundledModelsDirectory()
+    if (!fs.existsSync(bundledDir)) {
+        console.log('No pretrained-models directory found, skipping.')
+        return
+    }
+
+    const files = fs
+        .readdirSync(bundledDir)
+        .filter((f) => f.endsWith('.joblib'))
+    if (files.length === 0) return
+
+    console.log(`Importing ${files.length} bundled models...`)
+    const modelsDir = getModelsDirectory()
+
+    for (const file of files) {
+        const sourcePath = path.join(bundledDir, file)
+        const destPath = path.join(modelsDir, file)
+
+        try {
+            if (!fs.existsSync(destPath)) {
+                fs.copyFileSync(sourcePath, destPath)
+            }
+
+            const input: MLInfoInputData = {
+                mode: 'info',
+                model_path: destPath,
+            }
+            const output = await executePythonML(input)
+            const info = (output.result as MLModelInfoResult).model_metadata
+
+            const modelId = await mlRepository.saveMLModel({
+                model_path: destPath,
+                model_type: info.model_type,
+                algorithm: info.algorithm,
+                c_index: info.c_index,
+                bootstrap_c_index: info.bootstrap_c_index ?? 0,
+                bootstrap_c_index_std: info.bootstrap_c_index_std ?? 0,
+                n_samples: info.n_samples,
+                n_events: info.n_events,
+                training_date: info.training_date,
+                feature_names: JSON.stringify(info.feature_names),
+                is_bundled: 1,
+            })
+
+            await mlRepository.setActiveMLModel(modelId)
+        } catch (e) {
+            console.error(`Failed to import bundled model ${file}:`, e)
+        }
+    }
+}
+
+/**
  * Migration helper: Imports existing .joblib files into the database if the table is empty.
  * This runs once on startup.
  */
 export const syncModelsToDatabase = async (): Promise<void> => {
     const dbModels = await mlRepository.getAllMLModels()
-    if (dbModels.length > 0) return // Already synced
+    const userModels = dbModels.filter((m) => m.is_bundled === 0)
+    if (userModels.length > 0) return // Already synced
 
     const modelsDir = getModelsDirectory()
     if (!fs.existsSync(modelsDir)) return
 
-    const files = fs.readdirSync(modelsDir).filter((f) => f.endsWith('.joblib'))
+    const registeredPaths = new Set(dbModels.map((m) => m.model_path))
+    const files = fs
+        .readdirSync(modelsDir)
+        .filter((f) => f.endsWith('.joblib'))
+        .filter((f) => !registeredPaths.has(path.join(modelsDir, f)))
+
+    if (files.length === 0) return
     console.log(`Syncing ${files.length} existing models to database...`)
 
     for (const file of files) {
@@ -313,6 +394,8 @@ export const syncModelsToDatabase = async (): Promise<void> => {
                 model_type: info.model_type,
                 algorithm: info.algorithm,
                 c_index: info.c_index,
+                bootstrap_c_index: info.bootstrap_c_index ?? 0,
+                bootstrap_c_index_std: info.bootstrap_c_index_std ?? 0,
                 n_samples: info.n_samples,
                 n_events: info.n_events,
                 training_date: info.training_date,

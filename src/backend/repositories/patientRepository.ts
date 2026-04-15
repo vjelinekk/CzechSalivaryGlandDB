@@ -746,7 +746,7 @@ export const getKaplanMeierData = async (
             let query = ''
             if (kaplanMeierType === KaplanMeierTypeEnum.survival) {
                 query = `
-                    SELECT p.diagnosis_year as rok_diagnozy,
+                    SELECT p.diagnosis_date as rok_diagnozy,
                            p.death_date as datum_umrti,
                            p.last_follow_up as posledni_kontrola
                     FROM ${TableNames.patient} p
@@ -756,7 +756,7 @@ export const getKaplanMeierData = async (
                 `
             } else {
                 query = `
-                    SELECT p.diagnosis_year as rok_diagnozy,
+                    SELECT p.diagnosis_date as rok_diagnozy,
                            p.date_of_recidive as datum_prokazani_recidivy,
                            p.last_follow_up as posledni_kontrola
                     FROM ${TableNames.patient} p
@@ -831,6 +831,94 @@ const getLastFollowUpDate = (row: {
     return null
 }
 
+export const getTnmDistribution = async (
+    patientIds: number[],
+    editionId: number
+): Promise<{
+    clinical: {
+        t: Record<string, number>
+        n: Record<string, number>
+        m: Record<string, number>
+        stage: Record<string, number>
+    }
+    pathological: {
+        t: Record<string, number>
+        n: Record<string, number>
+        m: Record<string, number>
+        stage: Record<string, number>
+    }
+}> => {
+    const empty = { t: {}, n: {}, m: {}, stage: {} }
+    if (patientIds.length === 0) {
+        return { clinical: empty, pathological: { ...empty } }
+    }
+
+    const placeholders = patientIds.map(() => '?').join(', ')
+    const query = `
+        SELECT
+            tvd_ct.code  AS clinical_t,
+            tvd_cn.code  AS clinical_n,
+            tvd_cm.code  AS clinical_m,
+            tvd_cg.code  AS clinical_stage,
+            tvd_pt.code  AS pathological_t,
+            tvd_pn.code  AS pathological_n,
+            tvd_pm.code  AS pathological_m,
+            tvd_pg.code  AS pathological_stage
+        FROM ${TableNames.patientStaging} ps
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_ct ON tvd_ct.id = ps.clinical_t_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_cn ON tvd_cn.id = ps.clinical_n_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_cm ON tvd_cm.id = ps.clinical_m_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_cg ON tvd_cg.id = ps.clinical_grade_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pt ON tvd_pt.id = ps.pathological_t_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pn ON tvd_pn.id = ps.pathological_n_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pm ON tvd_pm.id = ps.pathological_m_id
+        LEFT JOIN ${TableNames.tnmValueDefinition} tvd_pg ON tvd_pg.id = ps.pathological_grade_id
+        WHERE ps.id_patient IN (${placeholders}) AND ps.id_edition = ?
+    `
+
+    type Row = {
+        clinical_t: string | null
+        clinical_n: string | null
+        clinical_m: string | null
+        clinical_stage: string | null
+        pathological_t: string | null
+        pathological_n: string | null
+        pathological_m: string | null
+        pathological_stage: string | null
+    }
+
+    const rows = await runQueryAll<Row>(query, [...patientIds, editionId])
+
+    const inc = (obj: Record<string, number>, key: string | null) => {
+        if (key) obj[key] = (obj[key] || 0) + 1
+    }
+
+    const ct: Record<string, number> = {}
+    const cn: Record<string, number> = {}
+    const cm: Record<string, number> = {}
+    const cstage: Record<string, number> = {}
+    const pt: Record<string, number> = {}
+    const pn: Record<string, number> = {}
+    const pm: Record<string, number> = {}
+    const pstage: Record<string, number> = {}
+
+    for (const row of rows) {
+        inc(ct, row.clinical_t)
+        inc(cn, row.clinical_n)
+        inc(cm, row.clinical_m)
+        inc(cstage, row.clinical_stage)
+        inc(pt, row.pathological_t)
+        inc(pn, row.pathological_n)
+        inc(pm, row.pathological_m)
+        inc(pstage, row.pathological_stage)
+    }
+
+    return {
+        clinical: { t: ct, n: cn, m: cm, stage: cstage },
+        pathological: { t: pt, n: pn, m: pm, stage: pstage },
+    }
+}
+
 export const getChiSquareContingencyTable = async (
     rows: number,
     columns: number,
@@ -841,7 +929,8 @@ export const getChiSquareContingencyTable = async (
     columnSelectedCategories: Record<
         number,
         Record<InferenceChiSquareCategories, string[]>
-    >
+    >,
+    tnmEditionId?: number
 ): Promise<number[][]> => {
     const contingencyTable = Array.from({ length: rows }, () =>
         Array(columns).fill(0)
@@ -852,7 +941,11 @@ export const getChiSquareContingencyTable = async (
             const rowData = rowSelectedCategories[i]
             const columnData = columnSelectedCategories[j]
             if (rowData && columnData) {
-                const count = await getChiSquareCount(rowData, columnData)
+                const count = await getChiSquareCount(
+                    rowData,
+                    columnData,
+                    tnmEditionId
+                )
                 contingencyTable[i][j] = count
             }
         }
@@ -863,10 +956,11 @@ export const getChiSquareContingencyTable = async (
 
 const getChiSquareCount = async (
     rowData: Record<InferenceChiSquareCategories, string[]>,
-    columnData: Record<InferenceChiSquareCategories, string[]>
+    columnData: Record<InferenceChiSquareCategories, string[]>,
+    editionId?: number
 ): Promise<number> => {
-    const rowFilters = collectCategoryFilters(rowData)
-    const colFilters = collectCategoryFilters(columnData)
+    const rowFilters = collectCategoryFilters(rowData, editionId)
+    const colFilters = collectCategoryFilters(columnData, editionId)
 
     // Deduplicate joins across row and column filters
     const allJoins = [...rowFilters.joins]
@@ -911,7 +1005,8 @@ const convertValues = (
 
 const buildCategoryFilter = (
     category: InferenceChiSquareCategories,
-    values: string[]
+    values: string[],
+    editionId?: number
 ): CategoryQueryFragment => {
     const converted = convertValues(category, values)
     const placeholders = converted.map(() => '?').join(', ')
@@ -932,8 +1027,10 @@ const buildCategoryFilter = (
                     `JOIN ${TableNames.patientStaging} ps ON ps.id_patient = p.id`,
                     `JOIN ${TableNames.tnmValueDefinition} tvd_t ON tvd_t.id = ps.clinical_t_id`,
                 ],
-                condition: `tvd_t.code IN (${placeholders})`,
-                params: converted,
+                condition: editionId
+                    ? `tvd_t.code IN (${placeholders}) AND ps.id_edition = ?`
+                    : `tvd_t.code IN (${placeholders})`,
+                params: editionId ? [...converted, editionId] : converted,
             }
         case InferenceChiSquareCategories.nClassification:
             return {
@@ -941,8 +1038,10 @@ const buildCategoryFilter = (
                     `JOIN ${TableNames.patientStaging} ps ON ps.id_patient = p.id`,
                     `JOIN ${TableNames.tnmValueDefinition} tvd_n ON tvd_n.id = ps.clinical_n_id`,
                 ],
-                condition: `tvd_n.code IN (${placeholders})`,
-                params: converted,
+                condition: editionId
+                    ? `tvd_n.code IN (${placeholders}) AND ps.id_edition = ?`
+                    : `tvd_n.code IN (${placeholders})`,
+                params: editionId ? [...converted, editionId] : converted,
             }
         case InferenceChiSquareCategories.mClassification:
             return {
@@ -950,8 +1049,10 @@ const buildCategoryFilter = (
                     `JOIN ${TableNames.patientStaging} ps ON ps.id_patient = p.id`,
                     `JOIN ${TableNames.tnmValueDefinition} tvd_m ON tvd_m.id = ps.clinical_m_id`,
                 ],
-                condition: `tvd_m.code IN (${placeholders})`,
-                params: converted,
+                condition: editionId
+                    ? `tvd_m.code IN (${placeholders}) AND ps.id_edition = ?`
+                    : `tvd_m.code IN (${placeholders})`,
+                params: editionId ? [...converted, editionId] : converted,
             }
         case InferenceChiSquareCategories.persistence:
             return {
@@ -975,7 +1076,8 @@ const buildCategoryFilter = (
 }
 
 const collectCategoryFilters = (
-    data: Record<InferenceChiSquareCategories, string[]>
+    data: Record<InferenceChiSquareCategories, string[]>,
+    editionId?: number
 ): { joins: string[]; conditions: string[]; params: unknown[] } => {
     const allJoins: string[] = []
     const conditions: string[] = []
@@ -986,7 +1088,8 @@ const collectCategoryFilters = (
         if (filteredValues.length > 0) {
             const fragment = buildCategoryFilter(
                 category as InferenceChiSquareCategories,
-                filteredValues
+                filteredValues,
+                editionId
             )
             for (const join of fragment.joins) {
                 if (!allJoins.includes(join)) {
@@ -1002,10 +1105,11 @@ const collectCategoryFilters = (
 }
 
 export const getTTestData = async (
-    groups: ITTestGroupsDto
+    groups: ITTestGroupsDto,
+    tnmEditionId?: number
 ): Promise<NonParametricTestDataDto> => {
-    const group1Data = await getTTestGroupData(groups.first)
-    const group2Data = await getTTestGroupData(groups.second)
+    const group1Data = await getTTestGroupData(groups.first, tnmEditionId)
+    const group2Data = await getTTestGroupData(groups.second, tnmEditionId)
 
     return {
         group1: group1Data,
@@ -1013,17 +1117,21 @@ export const getTTestData = async (
     }
 }
 
-const getTTestGroupData = async (group: {
-    histologicalTypes: string[]
-    tClassification: string[]
-    nClassification: string[]
-    mClassification: string[]
-    persistence: string[]
-    recurrence: string[]
-    state: string[]
-}): Promise<PatientDto[]> => {
+const getTTestGroupData = async (
+    group: {
+        histologicalTypes: string[]
+        tClassification: string[]
+        nClassification: string[]
+        mClassification: string[]
+        persistence: string[]
+        recurrence: string[]
+        state: string[]
+    },
+    editionId?: number
+): Promise<PatientDto[]> => {
     const filters = collectCategoryFilters(
-        group as Record<InferenceChiSquareCategories, string[]>
+        group as Record<InferenceChiSquareCategories, string[]>,
+        editionId
     )
 
     const joinClause =
@@ -1033,7 +1141,7 @@ const getTTestGroupData = async (group: {
             ? ' AND ' + filters.conditions.join(' AND ')
             : ''
 
-    const query = `SELECT DISTINCT p.id FROM ${TableNames.patient} p ${joinClause}WHERE p.tumor_type = 'malignant' ${whereClause}`
+    const query = `SELECT DISTINCT p.id FROM ${TableNames.patient} p ${joinClause} WHERE p.tumor_type = 'malignant' ${whereClause}`
 
     const patients = await runQueryAll<PatientEntity>(query, filters.params)
 

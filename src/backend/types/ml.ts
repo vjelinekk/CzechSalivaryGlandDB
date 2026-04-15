@@ -4,14 +4,16 @@ export type MLAlgorithm = 'rsf' | 'coxph'
 
 export interface MLPatient {
     age_at_diagnosis?: number
-    therapy_type?: string
-    id_histology_type?: number
-    clinical_m_id?: number | null
-    pathological_m_id?: number | null
-    clinical_n_id?: number | null
-    pathological_n_id?: number | null
+    clinical_t_code?: string | null
+    pathological_t_code?: string | null
+    clinical_grade_code?: string | null
+    pathological_grade_code?: string | null
+    lymphatic_invasion?: string | null
+    perineural_invasion?: string | null
+    positive_node_count?: number | null
+    extranodal_extension?: string | null
     is_alive?: boolean
-    diagnosis_year?: string
+    diagnosis_date?: string
     death_date?: string | null
     last_follow_up?: string | null
     recidive?: boolean
@@ -53,7 +55,10 @@ export interface MLRiskFactor {
 }
 
 export interface MLTrainResult {
-    c_index: number
+    c_index: number // Apparent C-index (training set, optimistically biased)
+    bootstrap_c_index: number // .632-corrected bootstrap C-index (honest generalisation estimate)
+    bootstrap_c_index_std: number // Std of raw OOB C-indices across bootstrap iterations
+    bootstrap_n_valid: number // Number of successful bootstrap iterations (out of n_bootstrap)
     n_samples: number
     n_events: number
     training_date: string

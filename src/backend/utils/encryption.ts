@@ -22,11 +22,14 @@ export const encrypt = (text: string): { encrypted: string; iv: Buffer } => {
         const iv = crypto.randomBytes(16)
         const cipher = crypto.createCipheriv(
             algorithm,
-            Buffer.from(encryptionKey, 'hex'),
-            iv
+            Uint8Array.from(Buffer.from(encryptionKey, 'hex')),
+            Uint8Array.from(iv)
         )
         let encrypted = cipher.update(text)
-        encrypted = Buffer.concat([encrypted, cipher.final()])
+        encrypted = Buffer.concat([
+            Uint8Array.from(encrypted),
+            Uint8Array.from(cipher.final()),
+        ])
         return { encrypted: encrypted.toString('hex'), iv }
     } catch (error) {
         console.log(error)
@@ -42,11 +45,14 @@ export const decrypt = (text: string, iv: Buffer): string => {
         const encryptedText = Buffer.from(text, 'hex')
         const decipher = crypto.createDecipheriv(
             algorithm,
-            Buffer.from(encryptionKey, 'hex'),
-            iv
+            Uint8Array.from(Buffer.from(encryptionKey, 'hex')),
+            Uint8Array.from(iv)
         )
-        let decrypted = decipher.update(encryptedText)
-        decrypted = Buffer.concat([decrypted, decipher.final()])
+        let decrypted: Buffer = decipher.update(Uint8Array.from(encryptedText))
+        decrypted = Buffer.concat([
+            Uint8Array.from(decrypted),
+            Uint8Array.from(decipher.final()),
+        ])
         return decrypted.toString()
     } catch (error) {
         console.log(error)

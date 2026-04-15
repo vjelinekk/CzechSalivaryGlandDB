@@ -6,16 +6,18 @@ class Patient(TypedDict):
     """
     # Features
     age_at_diagnosis: NotRequired[int]
-    therapy_type: NotRequired[str]
-    id_histology_type: NotRequired[int]
-    clinical_m_id: NotRequired[int | None]
-    pathological_m_id: NotRequired[int | None]
-    clinical_n_id: NotRequired[int | None]
-    pathological_n_id: NotRequired[int | None]
+    clinical_t_code: NotRequired[str | None]       # e.g. 'T1', 'T2', 'T3', 'T4a', 'T4b', 'TX'
+    pathological_t_code: NotRequired[str | None]
+    clinical_grade_code: NotRequired[str | None]   # e.g. 'Stage I', 'Stage IVA'
+    pathological_grade_code: NotRequired[str | None]
+    lymphatic_invasion: NotRequired[str | None]   # 'yes' / 'no' / None
+    perineural_invasion: NotRequired[str | None]
+    positive_node_count: NotRequired[int | None]
+    extranodal_extension: NotRequired[str | None]
 
     # Targets / Time calculation fields
     is_alive: NotRequired[bool]
-    diagnosis_year: NotRequired[str]
+    diagnosis_date: NotRequired[str]
     death_date: NotRequired[str | None]
     last_follow_up: NotRequired[str | None]
     recidive: NotRequired[bool]

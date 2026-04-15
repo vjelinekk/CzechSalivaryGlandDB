@@ -43,6 +43,7 @@ const DescriptiveStatistics: React.FC = () => {
     const { t } = useTranslation()
     const [loading, setLoading] = useState<boolean>(true)
     const [statistics, setStatistics] = useState<StatisticsData | null>(null)
+    const [patientIds, setPatientIds] = useState<number[]>([])
     const [error, setError] = useState<string | null>(null)
     const [selectedType, setSelectedType] = useState<DescriptiveStatisticsType>(
         DescriptiveStatisticsType.ALL
@@ -96,8 +97,8 @@ const DescriptiveStatistics: React.FC = () => {
                     return
                 }
 
+                setPatientIds(patients.map((p) => p.id as number))
                 const stats = calculateStatistics(patients)
-                console.log(stats)
                 setStatistics(stats)
                 setError(null)
             } catch (err) {
@@ -462,7 +463,7 @@ const DescriptiveStatistics: React.FC = () => {
                         {(selectedType ===
                             DescriptiveStatisticsType.MALIGNANT ||
                             selectedType === DescriptiveStatisticsType.ALL) && (
-                            <TnmStatistics statistics={statistics} />
+                            <TnmStatistics patientIds={patientIds} />
                         )}
 
                         {/* Recurrence */}

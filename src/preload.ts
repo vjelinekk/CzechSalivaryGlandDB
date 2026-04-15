@@ -102,20 +102,28 @@ contextBridge.exposeInMainWorld('api', {
         columnSelectedCategories: Record<
             number,
             Record<InferenceChiSquareCategories, string[]>
-        >
+        >,
+        tnmEditionId?: number
     ) => {
         return ipcRenderer.invoke(ipcAPIGetChannels.getChiSquareData, [
             rows,
             columns,
             rowSelectedCateogries,
             columnSelectedCategories,
+            tnmEditionId,
         ])
     },
-    getTTestData: (selectedGroups: ITTestGroups) => {
-        return ipcRenderer.invoke(
-            ipcAPIGetChannels.getTTestData,
-            selectedGroups
-        )
+    getTTestData: (selectedGroups: ITTestGroups, tnmEditionId?: number) => {
+        return ipcRenderer.invoke(ipcAPIGetChannels.getTTestData, [
+            selectedGroups,
+            tnmEditionId,
+        ])
+    },
+    getTnmDistribution: (patientIds: number[], editionId: number) => {
+        return ipcRenderer.invoke(ipcAPIGetChannels.getTnmDistribution, [
+            patientIds,
+            editionId,
+        ])
     },
     getActiveTnmEdition: () => {
         return ipcRenderer.invoke(ipcAPIGetChannels.getActiveTnmEdition)

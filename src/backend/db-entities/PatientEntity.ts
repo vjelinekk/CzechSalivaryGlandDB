@@ -18,7 +18,7 @@ export interface PatientEntity {
     pack_years: number
     alcohol_abuse: number // boolean
     tumor_location: 'submandibular' | 'sublingual' | 'parotid'
-    diagnosis_year: string
+    diagnosis_date: string
     side_of_lesion: string
     diagnosis_methods: string
     // fnab related fields kept on patient for simplicity per design

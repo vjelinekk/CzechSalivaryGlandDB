@@ -24,7 +24,7 @@ def create_mock_data(n=100):
             'pathological_n_id': 13 if is_high_risk else 7, # 13=N3b, 7=N0
             'clinical_n_id': 7,
             'is_alive': not is_high_risk,
-            'diagnosis_year': 2018,
+            'diagnosis_date': '2018-06-15',
             'death_date': '2020-01-01' if is_high_risk else None,
             'last_follow_up': '2020-01-01' if is_high_risk else '2024-01-01',
             'recidive': is_high_risk,
@@ -76,7 +76,7 @@ def main():
         'id_histology_type': 1,
         'pathological_m_id': 14,
         'pathological_n_id': 7,
-        'diagnosis_year': 2020,
+        'diagnosis_date': '2020-06-15',
     }
     
     predict_low = run_ml_engine({
@@ -93,7 +93,7 @@ def main():
         'id_histology_type': 1,
         'pathological_m_id': 15,
         'pathological_n_id': 13,
-        'diagnosis_year': 2020,
+        'diagnosis_date': '2020-06-15',
     }
     
     predict_high = run_ml_engine({

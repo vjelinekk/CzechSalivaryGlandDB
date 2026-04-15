@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {
     Box,
+    Chip,
     Paper,
     Table,
     TableBody,
@@ -128,6 +129,9 @@ const ModelInfoTab: React.FC = () => {
                                 {t(appTranslationKeys.mlTrainingDate)}
                             </TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>
+                                {t(appTranslationKeys.mlBootstrapCindexTable)}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>
                                 {t(appTranslationKeys.mlCindex)}
                             </TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>
@@ -142,7 +146,7 @@ const ModelInfoTab: React.FC = () => {
                         {models.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={7}
+                                    colSpan={8}
                                     align="center"
                                     sx={{ py: 3 }}
                                 >
@@ -172,11 +176,32 @@ const ModelInfoTab: React.FC = () => {
                                         </Tooltip>
                                     </TableCell>
                                     <TableCell>
-                                        {model.model_type === 'overall_survival'
-                                            ? t(appTranslationKeys.mlSurvival)
-                                            : t(
-                                                  appTranslationKeys.mlRecurrence
-                                              )}
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1,
+                                            }}
+                                        >
+                                            {model.model_type ===
+                                            'overall_survival'
+                                                ? t(
+                                                      appTranslationKeys.mlSurvival
+                                                  )
+                                                : t(
+                                                      appTranslationKeys.mlRecurrence
+                                                  )}
+                                            {model.is_bundled && (
+                                                <Chip
+                                                    label={t(
+                                                        appTranslationKeys.mlBundledModel
+                                                    )}
+                                                    size="small"
+                                                    color="info"
+                                                    variant="outlined"
+                                                />
+                                            )}
+                                        </Box>
                                     </TableCell>
                                     <TableCell>
                                         {model.model_metadata.algorithm ===
@@ -190,6 +215,26 @@ const ModelInfoTab: React.FC = () => {
                                         ).toLocaleString()}
                                     </TableCell>
                                     <TableCell sx={{ fontWeight: 'medium' }}>
+                                        {(
+                                            model.model_metadata
+                                                .bootstrap_c_index * 100
+                                        ).toFixed(1)}
+                                        %{' '}
+                                        <span
+                                            style={{
+                                                color: 'gray',
+                                                fontSize: '0.75rem',
+                                            }}
+                                        >
+                                            ±
+                                            {(
+                                                model.model_metadata
+                                                    .bootstrap_c_index_std * 100
+                                            ).toFixed(1)}
+                                            %
+                                        </span>
+                                    </TableCell>
+                                    <TableCell color="textSecondary">
                                         {(
                                             model.model_metadata.c_index * 100
                                         ).toFixed(1)}
@@ -205,15 +250,20 @@ const ModelInfoTab: React.FC = () => {
                                                 appTranslationKeys.mlDeleteModelAndFile
                                             )}
                                         >
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                onClick={() =>
-                                                    handleDeleteClick(model.id)
-                                                }
-                                            >
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
+                                            <span>
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    disabled={model.is_bundled}
+                                                    onClick={() =>
+                                                        handleDeleteClick(
+                                                            model.id
+                                                        )
+                                                    }
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </span>
                                         </Tooltip>
                                     </TableCell>
                                 </TableRow>

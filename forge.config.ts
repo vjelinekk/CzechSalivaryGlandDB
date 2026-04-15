@@ -15,7 +15,7 @@ import { rendererConfig } from './webpack.renderer.config'
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
-        extraResource: ['db.sqlite', 'ml_engine'],
+        extraResource: ['db.sqlite', 'ml_engine', 'pretrained-models'],
     },
     rebuildConfig: {},
     makers: [

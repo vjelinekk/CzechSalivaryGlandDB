@@ -127,13 +127,17 @@
     "ml-training-in-progress": "Training...",
     "ml-train-model": "Train model",
     "ml-training-results": "Training results",
-    "ml-cindex-accuracy": "C-index (Accuracy)",
+    "ml-cindex-accuracy": "C-index (training)",
+    "ml-bootstrap-cindex": "Bootstrap C-index (.632)",
+    "ml-bootstrap-cindex-std": "OOB C-index std. dev.",
     "ml-number-of-patients": "Number of patients",
     "ml-number-of-events": "Number of events",
     "ml-training-date": "Training date",
     "ml-active": "Active",
     "ml-model-type": "Model type",
-    "ml-cindex": "C-index",
+    "ml-cindex": "C-index (training)",
+    "ml-bootstrap-cindex-table": "Bootstrap C-index",
+    "ml-bootstrap-low-iterations": "Only {{n}} of {{total}} bootstrap iterations completed successfully. The dataset may be too small for a reliable estimate.",
     "ml-sample": "Sample",
     "ml-actions": "Actions",
     "ml-no-models-trained": "No models have been trained yet.",
@@ -142,5 +146,6 @@
     "ml-delete-model-title": "Delete ML model?",
     "ml-delete-model-warning": "This action will permanently delete the model metadata from the database and the physical .joblib file from disk. This action cannot be undone.",
     "ml-delete-cancel": "Cancel",
-    "ml-delete-model": "Delete"
+    "ml-delete-model": "Delete",
+    "ml-bundled-model": "Pre-trained"
 }

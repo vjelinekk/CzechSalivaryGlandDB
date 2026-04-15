@@ -27,7 +27,7 @@ from ml_types.model_types import (
     SurvivalPredictionResult,
     RecurrencePredictionResult, ModelInfoResult,
 )
-from survival_model import SurvivalModel
+from survival_model import SurvivalModel, bootstrap_validate
 from validators import validate_input
 from typing import Union
 
@@ -103,12 +103,18 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     # Calculate feature importance (permutation for RSF, coefficients for CoxPH)
     model.calculate_feature_importance(X, y_event, y_time, n_repeats=10)
 
-    # Get performance metrics
+    # Apparent C-index (training set — optimistically biased)
     c_index = model.get_c_index(X, y_event, y_time)
+
+    # Bootstrap .632 C-index — honest generalisation estimate
+    bootstrap = bootstrap_validate(patients, model_type, algorithm, c_index)
 
     # Save model with metadata
     metadata: TrainResultMetadata = {
         'c_index': c_index,
+        'bootstrap_c_index': bootstrap['bootstrap_c_index'],
+        'bootstrap_c_index_std': bootstrap['bootstrap_c_index_std'],
+        'bootstrap_n_valid': bootstrap['bootstrap_n_valid'],
         'n_samples': len(patients),
         'n_events': n_events,
         'training_date': datetime.now().isoformat(),
@@ -144,15 +150,15 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
     # Calculate risk score and probabilities (survival or recurrence based on model type)
     result = model.predict_risk(X, model_type=model_type)
 
-    # Get top risk factors
-    importance = model.get_feature_importance()
+    # Get top risk factors (local for CoxPH, global for RSF)
+    importance = model.get_local_feature_importance(X)
     feature_names = metadata.get('feature_names', [])
 
     if len(importance) == len(feature_names):
-        # Sort by importance descending
+        # Sort by absolute importance descending
         importance_pairs = [(feature_names[i], float(importance[i]))
                            for i in range(len(importance))]
-        importance_pairs.sort(key=lambda x: x[1], reverse=True)
+        importance_pairs.sort(key=lambda x: abs(x[1]), reverse=True)
 
         # Top 3 risk factors
         top_factors = [
