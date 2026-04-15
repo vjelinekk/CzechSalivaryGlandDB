@@ -443,6 +443,7 @@ export enum appTranslationKeys {
     mlModelType = 'ml-model-type',
     mlCindex = 'ml-cindex',
     mlBootstrapCindexTable = 'ml-bootstrap-cindex-table',
+    mlBootstrapLowIterations = 'ml-bootstrap-low-iterations',
     mlSample = 'ml-sample',
     mlActions = 'ml-actions',
     mlNoModelsTrained = 'ml-no-models-trained',

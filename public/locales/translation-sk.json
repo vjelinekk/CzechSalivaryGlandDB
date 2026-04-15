@@ -140,6 +140,7 @@
     "ml-model-type": "Typ modelu",
     "ml-cindex": "C-index (trénovanie)",
     "ml-bootstrap-cindex-table": "Bootstrap C-index",
+    "ml-bootstrap-low-iterations": "Iba {{n}} z {{total}} bootstrap iterácií bolo úspešných. Dáta môžu byť príliš malé pre spoľahlivý odhad.",
     "ml-sample": "Vzorka",
     "ml-actions": "Akcie",
     "ml-no-models-trained": "Zatiaľ neboli natrénované žiadne modely.",

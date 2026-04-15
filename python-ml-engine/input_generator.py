@@ -5,7 +5,6 @@ Creates realistic mock patient data for train/predict/info modes
 """
 
 import json
-import os
 from pathlib import Path
 
 

@@ -114,6 +114,7 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
         'c_index': c_index,
         'bootstrap_c_index': bootstrap['bootstrap_c_index'],
         'bootstrap_c_index_std': bootstrap['bootstrap_c_index_std'],
+        'bootstrap_n_valid': bootstrap['bootstrap_n_valid'],
         'n_samples': len(patients),
         'n_events': n_events,
         'training_date': datetime.now().isoformat(),

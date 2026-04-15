@@ -14,6 +14,7 @@ class TrainResultMetadata(TypedDict):
     c_index: float                  # Apparent C-index (training set, optimistically biased)
     bootstrap_c_index: float        # .632-corrected bootstrap C-index (honest generalisation estimate)
     bootstrap_c_index_std: float    # Std of raw OOB C-indices across bootstrap iterations
+    bootstrap_n_valid: int          # Number of successful bootstrap iterations (out of n_bootstrap)
     n_samples: int
     n_events: int
     training_date: str

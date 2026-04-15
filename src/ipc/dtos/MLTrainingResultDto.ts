@@ -2,6 +2,7 @@ export interface MLTrainingResultDto {
     c_index: number
     bootstrap_c_index: number
     bootstrap_c_index_std: number
+    bootstrap_n_valid: number
     n_samples: number
     n_events: number
     training_date: string

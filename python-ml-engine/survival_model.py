@@ -133,6 +133,7 @@ class SurvivalModel:
             # Most users want to see recurrence probability, not recurrence-free
             result: RecurrencePredictionResult = {
                 'risk_score': float(risk_score),
+                'top_risk_factors': [],
                 'recurrence_probability_1year': float(1.0 - surv_prob_1y),
                 'recurrence_probability_3year': float(1.0 - surv_prob_3y),
                 'recurrence_probability_5year': float(1.0 - surv_prob_5y),
@@ -145,6 +146,7 @@ class SurvivalModel:
             # For overall survival models
             result: SurvivalPredictionResult = {
                 'risk_score': float(risk_score),
+                'top_risk_factors': [],
                 'survival_probability_1year': float(surv_prob_1y),
                 'survival_probability_3year': float(surv_prob_3y),
                 'survival_probability_5year': float(surv_prob_5y)
@@ -363,6 +365,7 @@ def bootstrap_validate(
         return {
             'bootstrap_c_index':     float(c_apparent),
             'bootstrap_c_index_std': 0.0,
+            'bootstrap_n_valid':     0,
         }
 
     oob_mean = float(np.mean(oob_c_indices))
@@ -372,4 +375,5 @@ def bootstrap_validate(
     return {
         'bootstrap_c_index':     c_632,
         'bootstrap_c_index_std': oob_std,
+        'bootstrap_n_valid':     len(oob_c_indices),
     }

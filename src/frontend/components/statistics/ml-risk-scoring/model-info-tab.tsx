@@ -220,12 +220,16 @@ const ModelInfoTab: React.FC = () => {
                                                 .bootstrap_c_index * 100
                                         ).toFixed(1)}
                                         %{' '}
-                                        <span style={{ color: 'gray', fontSize: '0.75rem' }}>
+                                        <span
+                                            style={{
+                                                color: 'gray',
+                                                fontSize: '0.75rem',
+                                            }}
+                                        >
                                             ±
                                             {(
                                                 model.model_metadata
-                                                    .bootstrap_c_index_std *
-                                                100
+                                                    .bootstrap_c_index_std * 100
                                             ).toFixed(1)}
                                             %
                                         </span>

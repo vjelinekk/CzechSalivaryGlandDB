@@ -137,6 +137,7 @@
     "ml-model-type": "Model type",
     "ml-cindex": "C-index (training)",
     "ml-bootstrap-cindex-table": "Bootstrap C-index",
+    "ml-bootstrap-low-iterations": "Only {{n}} of {{total}} bootstrap iterations completed successfully. The dataset may be too small for a reliable estimate.",
     "ml-sample": "Sample",
     "ml-actions": "Actions",
     "ml-no-models-trained": "No models have been trained yet.",

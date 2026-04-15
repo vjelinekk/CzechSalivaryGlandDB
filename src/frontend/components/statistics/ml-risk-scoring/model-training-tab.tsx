@@ -161,6 +161,15 @@ const ModelTrainingTab: React.FC<ModelTrainingTabProps> = ({
                 </Alert>
             )}
 
+            {result && result.bootstrap_n_valid < 160 && (
+                <Alert severity="warning" sx={{ mb: 3 }}>
+                    {t(appTranslationKeys.mlBootstrapLowIterations, {
+                        n: result.bootstrap_n_valid,
+                        total: 200,
+                    })}
+                </Alert>
+            )}
+
             {result && (
                 <Paper elevation={1} sx={{ p: 3, bgcolor: '#f1f8e9' }}>
                     <Typography variant="h6" gutterBottom color="primary">
@@ -178,8 +187,11 @@ const ModelTrainingTab: React.FC<ModelTrainingTabProps> = ({
                                 {(result.bootstrap_c_index * 100).toFixed(1)}%
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
-                                {t(appTranslationKeys.mlBootstrapCindexStd)}:{' '}
-                                ±{(result.bootstrap_c_index_std * 100).toFixed(1)}%
+                                {t(appTranslationKeys.mlBootstrapCindexStd)}: ±
+                                {(result.bootstrap_c_index_std * 100).toFixed(
+                                    1
+                                )}
+                                %
                             </Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
