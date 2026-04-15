@@ -148,5 +148,6 @@
     "ml-delete-model-title": "Zmazať ML model?",
     "ml-delete-model-warning": "Táto akcia trvalo zmaže metadáta modelu z databázy aj fyzický súbor .joblib z disku. Túto akciu nie je možné vziať späť.",
     "ml-delete-cancel": "Zrušiť",
-    "ml-delete-model": "Zmazať"
+    "ml-delete-model": "Zmazať",
+    "ml-bundled-model": "Predtrénovaný"
 }

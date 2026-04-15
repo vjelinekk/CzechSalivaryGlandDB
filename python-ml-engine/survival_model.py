@@ -33,6 +33,7 @@ class SurvivalModel:
 
         if algorithm == AlgorithmTypeEnum.RSF:
             self.model = RandomSurvivalForest(
+                max_features='sqrt',
                 n_estimators=500,
                 min_samples_split=10,
                 min_samples_leaf=5,

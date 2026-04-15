@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {
     Box,
+    Chip,
     Paper,
     Table,
     TableBody,
@@ -175,11 +176,32 @@ const ModelInfoTab: React.FC = () => {
                                         </Tooltip>
                                     </TableCell>
                                     <TableCell>
-                                        {model.model_type === 'overall_survival'
-                                            ? t(appTranslationKeys.mlSurvival)
-                                            : t(
-                                                  appTranslationKeys.mlRecurrence
-                                              )}
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1,
+                                            }}
+                                        >
+                                            {model.model_type ===
+                                            'overall_survival'
+                                                ? t(
+                                                      appTranslationKeys.mlSurvival
+                                                  )
+                                                : t(
+                                                      appTranslationKeys.mlRecurrence
+                                                  )}
+                                            {model.is_bundled && (
+                                                <Chip
+                                                    label={t(
+                                                        appTranslationKeys.mlBundledModel
+                                                    )}
+                                                    size="small"
+                                                    color="info"
+                                                    variant="outlined"
+                                                />
+                                            )}
+                                        </Box>
                                     </TableCell>
                                     <TableCell>
                                         {model.model_metadata.algorithm ===
@@ -224,15 +246,20 @@ const ModelInfoTab: React.FC = () => {
                                                 appTranslationKeys.mlDeleteModelAndFile
                                             )}
                                         >
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                onClick={() =>
-                                                    handleDeleteClick(model.id)
-                                                }
-                                            >
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
+                                            <span>
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    disabled={model.is_bundled}
+                                                    onClick={() =>
+                                                        handleDeleteClick(
+                                                            model.id
+                                                        )
+                                                    }
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </span>
                                         </Tooltip>
                                     </TableCell>
                                 </TableRow>

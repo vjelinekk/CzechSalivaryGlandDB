@@ -145,5 +145,6 @@
     "ml-delete-model-title": "Delete ML model?",
     "ml-delete-model-warning": "This action will permanently delete the model metadata from the database and the physical .joblib file from disk. This action cannot be undone.",
     "ml-delete-cancel": "Cancel",
-    "ml-delete-model": "Delete"
+    "ml-delete-model": "Delete",
+    "ml-bundled-model": "Pre-trained"
 }

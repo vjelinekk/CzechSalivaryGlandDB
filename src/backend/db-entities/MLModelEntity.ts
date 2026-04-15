@@ -11,4 +11,5 @@ export interface MLModelEntity {
     training_date: string
     feature_names: string // JSON string array
     is_active: number // 0 or 1
+    is_bundled: number // 0 or 1
 }

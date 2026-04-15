@@ -16,4 +16,5 @@ export interface MLModelInfoDto {
     model_path: string
     model_type: string
     is_active: boolean
+    is_bundled: boolean
 }

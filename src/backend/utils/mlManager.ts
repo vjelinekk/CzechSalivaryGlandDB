@@ -17,6 +17,18 @@ export const getModelsDirectory = (): string => {
 }
 
 /**
+ * Resolves the path to the directory containing bundled pre-trained models.
+ * These are shipped with the app as extraResources.
+ */
+export const getBundledModelsDirectory = (): string => {
+    if (app.isPackaged) {
+        const base = app.getAppPath().replace(`${path.sep}app.asar`, '')
+        return path.join(base, 'pretrained-models')
+    }
+    return path.join(app.getAppPath(), 'pretrained-models')
+}
+
+/**
  * Resolves the path to the Python ML engine.
  * In development, it points to the compiled binary in python-ml-engine/dist.
  * In production, it points to the bundled executable in extraResources.

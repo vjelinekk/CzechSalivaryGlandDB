@@ -7,12 +7,25 @@ import { MLPredictionEntity } from '../db-entities/MLPredictionEntity'
  * Saves a new model's metadata to the database.
  */
 export const saveMLModel = async (
-    model: Omit<MLModelEntity, 'id' | 'is_active'>
+    model: Omit<MLModelEntity, 'id' | 'is_active' | 'is_bundled'> & {
+        is_bundled?: number
+    }
 ): Promise<number> => {
     return runInsert('ml_model', {
         ...model,
         is_active: 0,
+        is_bundled: model.is_bundled ?? 0,
     })
+}
+
+/**
+ * Returns true if any bundled (pre-trained) model is already registered.
+ */
+export const hasBundledModels = async (): Promise<boolean> => {
+    const result = await runQuery<{ count: number }>(
+        `SELECT COUNT(*) as count FROM ml_model WHERE is_bundled = 1`
+    )
+    return (result?.count ?? 0) > 0
 }
 
 /**

@@ -452,4 +452,5 @@ export enum appTranslationKeys {
     mlDeleteModelWarning = 'ml-delete-model-warning',
     mlDeleteCancel = 'ml-delete-cancel',
     mlDeleteModel = 'ml-delete-model',
+    mlBundledModel = 'ml-bundled-model',
 }

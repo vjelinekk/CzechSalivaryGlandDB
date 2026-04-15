@@ -234,7 +234,8 @@ const schemaQueries = [
         n_events INTEGER,
         training_date TEXT,
         feature_names TEXT,       -- JSON string array
-        is_active INTEGER DEFAULT 0
+        is_active INTEGER DEFAULT 0,
+        is_bundled INTEGER DEFAULT 0
     )`,
     // Ensure only one model per type+algorithm is active at a time
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_active_ml_model 
