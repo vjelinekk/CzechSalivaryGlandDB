@@ -90,7 +90,7 @@ const schemaQueries = [
         pack_years REAL,
         alcohol_abuse INTEGER, -- boolean
         tumor_location TEXT, -- 'submandibular', 'sublingual', 'parotid'
-        diagnosis_year TEXT, -- date
+        diagnosis_date TEXT, -- date
         side_of_lesion TEXT,
         diagnosis_methods TEXT,
         fnab INTEGER, -- boolean
@@ -600,7 +600,7 @@ const generateMockPatients = (count: number) => {
                 `INSERT INTO patient (
                 tumor_type, name, surname, personal_identification_number,
                 age_at_diagnosis, gender, 
-                tumor_location, diagnosis_year, therapy_type, is_alive, 
+                tumor_location, diagnosis_date, therapy_type, is_alive,
                 death_date, last_follow_up, recidive, date_of_recidive, 
                 date_of_first_post_treatment_follow_up
             ) VALUES (?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

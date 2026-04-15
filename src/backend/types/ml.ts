@@ -13,7 +13,7 @@ export interface MLPatient {
     positive_node_count?: number | null
     extranodal_extension?: string | null
     is_alive?: boolean
-    diagnosis_year?: string
+    diagnosis_date?: string
     death_date?: string | null
     last_follow_up?: string | null
     recidive?: boolean

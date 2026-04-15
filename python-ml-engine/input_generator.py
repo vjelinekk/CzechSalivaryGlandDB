@@ -35,7 +35,7 @@ def generate_mock_patients(num_patients=60):
 
             # Outcome variables
             'is_alive': i % 3 == 0,  # 1/3 alive, 2/3 dead
-            'diagnosis_year': 2015 + (i % 8),
+            'diagnosis_date': f"20{15 + (i % 8)}-06-15",
             'death_date': None if i % 3 == 0 else f"202{2 + (i % 3)}-06-15",
             'last_follow_up': '2024-01-01' if i % 3 == 0 else f"202{2 + (i % 3)}-06-15",
             'recidive': i % 2 == 0,  # 1/2 recurrence rate (50% → 30 events for 60 patients)

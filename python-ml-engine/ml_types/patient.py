@@ -17,7 +17,7 @@ class Patient(TypedDict):
 
     # Targets / Time calculation fields
     is_alive: NotRequired[bool]
-    diagnosis_year: NotRequired[str]
+    diagnosis_date: NotRequired[str]
     death_date: NotRequired[str | None]
     last_follow_up: NotRequired[str | None]
     recidive: NotRequired[bool]

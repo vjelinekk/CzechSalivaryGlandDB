@@ -746,7 +746,7 @@ export const getKaplanMeierData = async (
             let query = ''
             if (kaplanMeierType === KaplanMeierTypeEnum.survival) {
                 query = `
-                    SELECT p.diagnosis_year as rok_diagnozy,
+                    SELECT p.diagnosis_date as rok_diagnozy,
                            p.death_date as datum_umrti,
                            p.last_follow_up as posledni_kontrola
                     FROM ${TableNames.patient} p
@@ -756,7 +756,7 @@ export const getKaplanMeierData = async (
                 `
             } else {
                 query = `
-                    SELECT p.diagnosis_year as rok_diagnozy,
+                    SELECT p.diagnosis_date as rok_diagnozy,
                            p.date_of_recidive as datum_prokazani_recidivy,
                            p.last_follow_up as posledni_kontrola
                     FROM ${TableNames.patient} p

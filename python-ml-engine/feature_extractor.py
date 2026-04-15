@@ -241,15 +241,15 @@ class FeatureExtractor:
         times = []
 
         for _, row in df.iterrows():
-            # Get diagnosis date (year)
-            diagnosis_year = row.get('diagnosis_year')
+            # Get diagnosis date
+            diagnosis_date_str = row.get('diagnosis_date')
 
-            if pd.isna(diagnosis_year):
+            if not diagnosis_date_str or pd.isna(diagnosis_date_str):
                 times.append(np.nan)
                 continue
 
             try:
-                diagnosis_date = datetime(int(diagnosis_year), 1, 1)
+                diagnosis_date = pd.to_datetime(diagnosis_date_str)
             except (ValueError, TypeError):
                 times.append(np.nan)
                 continue
@@ -303,10 +303,10 @@ class FeatureExtractor:
                     pass
 
             if treatment_date is None:
-                diagnosis_year = row.get('diagnosis_year')
-                if diagnosis_year and not pd.isna(diagnosis_year):
+                diagnosis_date_str = row.get('diagnosis_date')
+                if diagnosis_date_str and not pd.isna(diagnosis_date_str):
                     try:
-                        treatment_date = datetime(int(diagnosis_year), 1, 1)
+                        treatment_date = pd.to_datetime(diagnosis_date_str)
                     except:
                         pass
 
