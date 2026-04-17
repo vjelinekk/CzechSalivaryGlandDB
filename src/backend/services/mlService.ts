@@ -88,6 +88,14 @@ export const trainMLModel = async (
     }
 
     const sanitizedPatients = malignantPatients.map(sanitizePatientForML)
+
+    // TEMPORARY: Save sanitized patients to models-validation/data for inspection
+    // const validationDataPath = path.join(
+    //     __dirname,
+    //     '../../models-validation/data/sanitized-patients.json'
+    // )
+    // fs.writeFileSync(validationDataPath, JSON.stringify(sanitizedPatients, null, 2))
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const modelName = `${modelType}_${algorithm}_${timestamp}.joblib`
     const modelPath = path.join(getModelsDirectory(), modelName)

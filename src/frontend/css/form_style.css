@@ -75,7 +75,7 @@
 
 .form [class='checkboxItemDiv'],
 .form .optionalCheckboxOptionDiv,
-.form span {
+.form span:not([class*='Mui']) {
     position: relative;
     display: flex;
     margin: 1.2em;

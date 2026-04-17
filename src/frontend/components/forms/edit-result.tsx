@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditSavedState } from '../../types'
 import { formTranslationKeys } from '../../translations'
+import Snackbar from '@mui/material/Snackbar'
+import Alert from '@mui/material/Alert'
 
 interface EditResultProps {
     editSaved: EditSavedState
@@ -10,37 +12,45 @@ interface EditResultProps {
 
 const EditResult: React.FC<EditResultProps> = ({ editSaved, setEditSaved }) => {
     const { t } = useTranslation()
+    const [open, setOpen] = useState(false)
 
-    if (editSaved) {
-        useEffect(() => {
-            if (editSaved.saved !== null) {
-                setTimeout(() => {
-                    setEditSaved((prevEditSaved) => ({
-                        ...prevEditSaved,
-                        saved: null,
-                    }))
-                }, 2000)
-            }
-        }, [editSaved.saved])
+    useEffect(() => {
+        if (editSaved && editSaved.saved !== null) {
+            setOpen(true)
+        }
+    }, [editSaved?.saved, editSaved?.done])
+
+    const handleClose = () => {
+        setOpen(false)
+        setEditSaved((prevEditSaved) => ({
+            ...prevEditSaved,
+            saved: null,
+        }))
     }
 
-    if (!editSaved) {
+    if (!editSaved || editSaved.saved === null) {
         return null
     }
 
-    if (editSaved.saved) {
-        return (
-            <div className="editSuccess">
-                <p>{t(formTranslationKeys.changeSaved)}</p>
-            </div>
-        )
-    } else if (editSaved.saved === false) {
-        return (
-            <div className="editError">
-                <p>{t(formTranslationKeys.changeSaveError)}</p>
-            </div>
-        )
-    }
+    return (
+        <Snackbar
+            open={open}
+            autoHideDuration={2000}
+            onClose={handleClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+            <Alert
+                onClose={handleClose}
+                severity={editSaved.saved ? 'success' : 'error'}
+                variant="filled"
+                sx={{ width: '100%', alignItems: 'center' }}
+            >
+                {editSaved.saved
+                    ? t(formTranslationKeys.changeSaved)
+                    : t(formTranslationKeys.changeSaveError)}
+            </Alert>
+        </Snackbar>
+    )
 }
 
 export default EditResult
