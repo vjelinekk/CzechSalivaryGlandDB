@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import ParotidMalignantGlandForm from '../../src/frontend/components/forms/parotid/malignant/parotid-malignant-gland-form.tsx'
 import SublingualMalignantGlandForm from '../../src/frontend/components/forms/sublingual/malignant/sublingual-malignant-gland-form.tsx'
 import SubmandibularMalignantGlandForm from '../../src/frontend/components/forms/submandibular/malignant/submandibular-malignant-gland-form.tsx'
+import { MLOperationProvider } from '../../src/frontend/components/ml-operation-context.tsx'
 import { expect } from '@jest/globals'
 
 // Mock useTnmData to avoid window.api calls
@@ -48,16 +49,18 @@ describe('ParotidGlandForm', () => {
         }
 
         render(
-            <ParotidMalignantGlandForm
-                data={data}
-                defaultFormState={defaultFormState}
-                editSaved={editSaved}
-                setEditSaved={setEditSaved}
-                setActiveComponent={setActiveComponent}
-                setActivePatient={setActivePatient}
-                idStudie={idStudie}
-                defaultSelectedStudies={defaultSelectedStudies}
-            />
+            <MLOperationProvider>
+                <ParotidMalignantGlandForm
+                    data={data}
+                    defaultFormState={defaultFormState}
+                    editSaved={editSaved}
+                    setEditSaved={setEditSaved}
+                    setActiveComponent={setActiveComponent}
+                    setActivePatient={setActivePatient}
+                    idStudie={idStudie}
+                    defaultSelectedStudies={defaultSelectedStudies}
+                />
+            </MLOperationProvider>
         )
 
         const headings = screen.getAllByRole('heading', { level: 1 })
@@ -70,16 +73,18 @@ describe('ParotidGlandForm', () => {
         }
 
         render(
-            <SublingualMalignantGlandForm
-                data={data}
-                defaultFormState={defaultFormState}
-                editSaved={editSaved}
-                setEditSaved={setEditSaved}
-                setActiveComponent={setActiveComponent}
-                setActivePatient={setActivePatient}
-                idStudie={idStudie}
-                defaultSelectedStudies={defaultSelectedStudies}
-            />
+            <MLOperationProvider>
+                <SublingualMalignantGlandForm
+                    data={data}
+                    defaultFormState={defaultFormState}
+                    editSaved={editSaved}
+                    setEditSaved={setEditSaved}
+                    setActiveComponent={setActiveComponent}
+                    setActivePatient={setActivePatient}
+                    idStudie={idStudie}
+                    defaultSelectedStudies={defaultSelectedStudies}
+                />
+            </MLOperationProvider>
         )
 
         const headings = screen.getAllByRole('heading', { level: 1 })
@@ -92,16 +97,18 @@ describe('ParotidGlandForm', () => {
         }
 
         render(
-            <SubmandibularMalignantGlandForm
-                data={data}
-                defaultFormState={defaultFormState}
-                editSaved={editSaved}
-                setEditSaved={setEditSaved}
-                setActiveComponent={setActiveComponent}
-                setActivePatient={setActivePatient}
-                idStudie={idStudie}
-                defaultSelectedStudies={defaultSelectedStudies}
-            />
+            <MLOperationProvider>
+                <SubmandibularMalignantGlandForm
+                    data={data}
+                    defaultFormState={defaultFormState}
+                    editSaved={editSaved}
+                    setEditSaved={setEditSaved}
+                    setActiveComponent={setActiveComponent}
+                    setActivePatient={setActivePatient}
+                    idStudie={idStudie}
+                    defaultSelectedStudies={defaultSelectedStudies}
+                />
+            </MLOperationProvider>
         )
 
         const headings = screen.getAllByRole('heading', { level: 1 })

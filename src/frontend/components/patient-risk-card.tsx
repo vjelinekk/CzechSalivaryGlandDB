@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
     Box,
     Button,
@@ -19,6 +19,7 @@ import InfoIcon from '@mui/icons-material/Info'
 import PsychologyIcon from '@mui/icons-material/Psychology'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CloseIcon from '@mui/icons-material/Close'
+import StopIcon from '@mui/icons-material/Stop'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import { useTranslation } from 'react-i18next'
 import { PatientType } from '../types'
@@ -26,6 +27,7 @@ import { appTranslationKeys } from '../translations'
 import { MLPredictionResultDto } from '../../ipc/dtos/MLPredictionResultDto'
 import { MLAlgorithm, MLModelType } from '../types/ml'
 import { keyframes } from '@emotion/react'
+import { useMLOperation } from './ml-operation-context'
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -42,6 +44,7 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
     disabled,
 }) => {
     const { t } = useTranslation()
+    const mlContext = useMLOperation()
     const [loading, setLoading] = useState<boolean>(false)
     const [result, setResult] = useState<MLPredictionResultDto | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -52,6 +55,13 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
     // Only show for malignant patients
     const isMalignant =
         patient.form_type && [1, 2, 3].includes(patient.form_type as number)
+
+    // Register as inline display when card is expanded (suppresses the floating widget)
+    useEffect(() => {
+        if (expand) {
+            return mlContext.registerInlineDisplay()
+        }
+    }, [expand, mlContext.registerInlineDisplay])
 
     // Load saved prediction when expanding or changing config
     useEffect(() => {
@@ -93,14 +103,14 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
         return null
     }
 
-    const handleCalculate = async () => {
-        if (loading) return
+    const handleCalculate = useCallback(async () => {
+        if (loading || mlContext.isRunning) return
         setLoading(true)
         setError(null)
         setResult(null)
 
         try {
-            const prediction = await window.ml.calculateRiskScore(
+            const prediction = await mlContext.startPrediction(
                 patient,
                 modelType,
                 algorithm,
@@ -108,6 +118,12 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
             )
             setResult(prediction)
         } catch (err: unknown) {
+            if (
+                err instanceof Error &&
+                (err as { cancelled?: boolean }).cancelled
+            ) {
+                return
+            }
             if (err instanceof Error) {
                 setError(err.message)
             } else {
@@ -117,7 +133,7 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
         } finally {
             setLoading(false)
         }
-    }
+    }, [loading, mlContext, patient, modelType, algorithm, t])
 
     const handleModelTypeChange = (
         _: unknown,
@@ -274,10 +290,89 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
                                 justifyContent: 'center',
                                 minHeight: '40px',
                                 alignItems: 'center',
+                                width: '100%',
                             }}
                         >
                             {loading ? (
-                                <CircularProgress size={24} />
+                                <Box sx={{ width: '100%' }}>
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            mb: 0.5,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                            sx={{ fontSize: '0.7rem' }}
+                                        >
+                                            {mlContext.stage
+                                                ? t(
+                                                      `ml-stage-${mlContext.stage.replace(/_/g, '-')}`,
+                                                      {
+                                                          defaultValue:
+                                                              mlContext.stage,
+                                                      }
+                                                  )
+                                                : t(
+                                                      appTranslationKeys.mlStageGettingReady
+                                                  )}
+                                        </Typography>
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 0.25,
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                                sx={{ fontSize: '0.7rem' }}
+                                            >
+                                                {mlContext.progress !== null
+                                                    ? `${mlContext.progress}%`
+                                                    : ''}
+                                            </Typography>
+                                            <Tooltip
+                                                title={t(
+                                                    appTranslationKeys.mlCancelOperation
+                                                )}
+                                            >
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={
+                                                        mlContext.cancelOperation
+                                                    }
+                                                    disableRipple
+                                                    sx={{
+                                                        p: '0 !important',
+                                                        width: '18px !important',
+                                                        height: '18px !important',
+                                                        pointerEvents: 'auto',
+                                                    }}
+                                                >
+                                                    <StopIcon
+                                                        sx={{
+                                                            fontSize: '0.85rem',
+                                                        }}
+                                                    />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    </Box>
+                                    <LinearProgress
+                                        variant={
+                                            mlContext.progress !== null
+                                                ? 'determinate'
+                                                : 'indeterminate'
+                                        }
+                                        value={mlContext.progress ?? 0}
+                                        sx={{ height: 4, borderRadius: 2 }}
+                                    />
+                                </Box>
                             ) : (
                                 !result &&
                                 !error && (
@@ -285,7 +380,9 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
                                         variant="contained"
                                         color="secondary"
                                         onClick={handleCalculate}
-                                        disabled={disabled}
+                                        disabled={
+                                            disabled || mlContext.isRunning
+                                        }
                                         disableRipple
                                         sx={{
                                             px: 3,
@@ -626,6 +723,7 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
                                         size="small"
                                         variant="text"
                                         onClick={handleCalculate}
+                                        disabled={mlContext.isRunning}
                                         disableRipple
                                         sx={{
                                             fontSize: '0.65rem',

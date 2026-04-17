@@ -1,4 +1,18 @@
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, dialog, Menu } from 'electron'
+
+// Suppress EPIPE errors that originate from killing the ML engine child process while
+// its stdin pipe is still being drained. These are expected and harmless — the process
+// has already been cancelled. All other uncaught exceptions still show the error dialog.
+process.on('uncaughtException', (err) => {
+    if ((err as NodeJS.ErrnoException).code === 'EPIPE') return
+
+    const message = err.stack || err.message
+    dialog.showErrorBox(
+        'A JavaScript error occurred in the main process',
+        message
+    )
+})
+
 import './backend/dbManager'
 import './ipc/ipcHandles'
 import {

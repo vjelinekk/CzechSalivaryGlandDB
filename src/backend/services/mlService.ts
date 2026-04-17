@@ -7,6 +7,7 @@ import {
     executePythonML,
     getBundledModelsDirectory,
     getModelsDirectory,
+    ProgressCallback,
 } from '../utils/mlManager'
 import {
     MLTrainInputData,
@@ -72,7 +73,8 @@ const sanitizePatientForML = (patient: PatientDto): MLPatient => {
  */
 export const trainMLModel = async (
     modelType: MLModelType,
-    algorithm: MLAlgorithm
+    algorithm: MLAlgorithm,
+    onProgress?: ProgressCallback
 ): Promise<MLTrainingResultDto> => {
     const allPatients = await getAllPatients()
     const malignantPatients = allPatients.filter(
@@ -108,7 +110,7 @@ export const trainMLModel = async (
         data: { patients: sanitizedPatients },
     }
 
-    const output = await executePythonML(input)
+    const output = await executePythonML(input, onProgress)
     const result = output.result as MLTrainResult
 
     // Save to database
@@ -145,7 +147,8 @@ export const calculateRiskScore = async (
     patient: PatientDto,
     modelType: MLModelType,
     algorithm?: MLAlgorithm,
-    recalculate = false
+    recalculate = false,
+    onProgress?: ProgressCallback
 ): Promise<MLPredictionResultDto> => {
     if (
         patient.form_type === undefined ||
@@ -198,7 +201,7 @@ export const calculateRiskScore = async (
         data: { patient: sanitizePatientForML(patient) },
     }
 
-    const output = await executePythonML(input)
+    const output = await executePythonML(input, onProgress)
     const result = output.result as
         | MLSurvivalPredictionResult
         | MLRecurrencePredictionResult

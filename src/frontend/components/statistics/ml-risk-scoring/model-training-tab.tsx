@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     Box,
     Button,
@@ -7,15 +7,20 @@ import {
     FormControlLabel,
     FormLabel,
     Grid,
+    IconButton,
+    LinearProgress,
     Paper,
     Radio,
     RadioGroup,
+    Tooltip,
     Typography,
     Alert,
 } from '@mui/material'
+import StopIcon from '@mui/icons-material/Stop'
 import { useTranslation } from 'react-i18next'
 import { MLTrainingResultDto } from '../../../../ipc/dtos/MLTrainingResultDto'
 import { appTranslationKeys } from '../../../translations'
+import { useMLOperation } from '../../ml-operation-context'
 
 interface ModelTrainingTabProps {
     onTrainingSuccess?: () => void
@@ -25,13 +30,21 @@ const ModelTrainingTab: React.FC<ModelTrainingTabProps> = ({
     onTrainingSuccess,
 }) => {
     const { t } = useTranslation()
+    const mlContext = useMLOperation()
     const [modelType, setModelType] = useState<
         'overall_survival' | 'recurrence'
     >('overall_survival')
     const [algorithm, setAlgorithm] = useState<'rsf' | 'coxph'>('rsf')
-    const [loading, setLoading] = useState<boolean>(false)
+    const [loading, setLoading] = useState<boolean>(
+        () => mlContext.isRunning && mlContext.operationType === 'train'
+    )
     const [result, setResult] = useState<MLTrainingResultDto | null>(null)
     const [error, setError] = useState<string | null>(null)
+
+    // Register this component as showing inline progress (suppresses the floating widget)
+    useEffect(() => {
+        return mlContext.registerInlineDisplay()
+    }, [mlContext.registerInlineDisplay])
 
     const handleTrain = async () => {
         setLoading(true)
@@ -39,7 +52,7 @@ const ModelTrainingTab: React.FC<ModelTrainingTabProps> = ({
         setResult(null)
 
         try {
-            const trainingResult = await window.ml.trainModel(
+            const trainingResult = await mlContext.startTraining(
                 modelType,
                 algorithm
             )
@@ -48,6 +61,12 @@ const ModelTrainingTab: React.FC<ModelTrainingTabProps> = ({
                 onTrainingSuccess()
             }
         } catch (err: unknown) {
+            if (
+                err instanceof Error &&
+                (err as { cancelled?: boolean }).cancelled
+            ) {
+                return
+            }
             if (err instanceof Error) {
                 setError(err.message)
                 return
@@ -134,24 +153,94 @@ const ModelTrainingTab: React.FC<ModelTrainingTabProps> = ({
                     </Grid>
                 </Grid>
 
-                <Box
-                    sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}
-                >
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleTrain}
-                        disabled={loading}
-                        startIcon={
-                            loading && (
-                                <CircularProgress size={20} color="inherit" />
-                            )
-                        }
-                    >
-                        {loading
-                            ? t(appTranslationKeys.mlTrainingInProgress)
-                            : t(appTranslationKeys.mlTrainModel)}
-                    </Button>
+                <Box sx={{ mt: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleTrain}
+                            disabled={loading || mlContext.isRunning}
+                            startIcon={
+                                loading &&
+                                mlContext.progress === null && (
+                                    <CircularProgress
+                                        size={20}
+                                        color="inherit"
+                                    />
+                                )
+                            }
+                        >
+                            {loading
+                                ? t(appTranslationKeys.mlTrainingInProgress)
+                                : t(appTranslationKeys.mlTrainModel)}
+                        </Button>
+                    </Box>
+
+                    {loading && (
+                        <Box sx={{ mt: 2 }}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    mb: 0.5,
+                                }}
+                            >
+                                <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                >
+                                    {mlContext.stage
+                                        ? t(
+                                              `ml-stage-${mlContext.stage.replace(/_/g, '-')}`,
+                                              { defaultValue: mlContext.stage }
+                                          )
+                                        : t(
+                                              appTranslationKeys.mlStageGettingReady
+                                          )}
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                    >
+                                        {mlContext.progress !== null
+                                            ? `${mlContext.progress}%`
+                                            : ''}
+                                    </Typography>
+                                    <Tooltip
+                                        title={t(
+                                            appTranslationKeys.mlCancelOperation
+                                        )}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            onClick={mlContext.cancelOperation}
+                                            sx={{ p: 0.25 }}
+                                        >
+                                            <StopIcon
+                                                sx={{ fontSize: '1rem' }}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>
+                            </Box>
+                            <LinearProgress
+                                variant={
+                                    mlContext.progress !== null
+                                        ? 'determinate'
+                                        : 'indeterminate'
+                                }
+                                value={mlContext.progress ?? 0}
+                            />
+                        </Box>
+                    )}
                 </Box>
             </Paper>
 

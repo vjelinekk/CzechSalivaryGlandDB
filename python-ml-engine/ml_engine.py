@@ -32,6 +32,11 @@ from validators import validate_input
 from typing import Union
 
 
+def _report_progress(progress: int, stage: str) -> None:
+    """Emit a structured progress message to stderr for the host process to consume."""
+    print(json.dumps({"progress": progress, "stage": stage}), file=sys.stderr, flush=True)
+
+
 def main() -> None:
     """Main entry point - reads stdin, routes to appropriate handler"""
     multiprocessing.freeze_support()
@@ -87,6 +92,8 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     if len(patients) < 50:
         raise ValueError(f"Insufficient training data: {len(patients)} patients (need at least 50)")
 
+    _report_progress(5, "preparing")
+
     # Extract features
     extractor = FeatureExtractor()
     X, y_event, y_time, feature_names = extractor.fit_transform(patients, model_type)
@@ -96,18 +103,32 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     if n_events < 15:
         raise ValueError(f"Insufficient events: {n_events} events (need at least 15)")
 
+    _report_progress(15, "extracting_features")
+
     # Train model
     model = SurvivalModel(algorithm=algorithm)
     model.fit(X, y_event, y_time)
 
+    _report_progress(30, "training_model")
+
     # Calculate feature importance (permutation for RSF, coefficients for CoxPH)
     model.calculate_feature_importance(X, y_event, y_time, n_repeats=10)
+
+    _report_progress(48, "feature_importance")
 
     # Apparent C-index (training set — optimistically biased)
     c_index = model.get_c_index(X, y_event, y_time)
 
+    _report_progress(55, "c_index")
+
     # Bootstrap .632 C-index — honest generalisation estimate
-    bootstrap = bootstrap_validate(patients, model_type, algorithm, c_index)
+    def _bootstrap_progress(iteration: int, total: int) -> None:
+        pct = 55 + int((iteration / total) * 42)
+        _report_progress(pct, "bootstrap")
+
+    bootstrap = bootstrap_validate(patients, model_type, algorithm, c_index, on_progress=_bootstrap_progress)
+
+    _report_progress(97, "saving")
 
     # Save model with metadata
     metadata: TrainResultMetadata = {
@@ -124,6 +145,8 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     }
     model.save(model_path, metadata, extractor)
 
+    _report_progress(100, "saving")
+
     return metadata
 
 
@@ -133,6 +156,8 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
     patient = input_data['data']['patient']
     model_path = input_data['model_path']
 
+    _report_progress(10, "loading_model")
+
     # Load model and extractor
     try:
         model, extractor, metadata = SurvivalModel.load(model_path)
@@ -141,11 +166,15 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
     except Exception as e:
         raise ValueError(f"Failed to load model: {e}")
 
+    _report_progress(55, "extracting_features")
+
     # Extract features for single patient
     X = extractor.transform([patient])
 
     # Get model type from metadata
     model_type = metadata['model_type']
+
+    _report_progress(80, "predicting")
 
     # Calculate risk score and probabilities (survival or recurrence based on model type)
     result = model.predict_risk(X, model_type=model_type)
@@ -169,6 +198,9 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
         top_factors = []
 
     result['top_risk_factors'] = top_factors
+
+    _report_progress(100, "predicting")
+
     return result
 
 
@@ -177,12 +209,16 @@ def handle_info(input_data: InfoInputData) -> ModelInfoResult:
     # Extract required fields (already validated by validate_input)
     model_path = input_data['model_path']
 
+    _report_progress(20, "loading_model")
+
     try:
         _, _, metadata = SurvivalModel.load(model_path)
     except FileNotFoundError:
         raise ValueError(f"Model file not found: {model_path}")
     except Exception as e:
         raise ValueError(f"Failed to load model: {e}")
+
+    _report_progress(100, "loading_model")
 
     return {'model_metadata': metadata}
 

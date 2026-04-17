@@ -290,4 +290,15 @@ contextBridge.exposeInMainWorld('ml', {
             modelType,
             algorithm,
         ]),
+    onProgress: (
+        callback: (data: { progress: number; stage: string }) => void
+    ) => {
+        ipcRenderer.on(ipcMLChannels.mlProgress, (_, data) => callback(data))
+    },
+    offProgress: () => {
+        ipcRenderer.removeAllListeners(ipcMLChannels.mlProgress)
+    },
+    cancel: () => {
+        ipcRenderer.invoke(ipcMLChannels.mlCancel)
+    },
 })
