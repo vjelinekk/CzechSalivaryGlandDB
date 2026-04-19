@@ -1,134 +1,170 @@
 #!/usr/bin/env python3
 """
-Sanity check for ML engine predictions.
-Trains a model and verifies that high-risk patients get higher scores than low-risk patients.
+Behavioural / model plausibility test for the ML engine.
+
+Trains a model on clearly separated high-risk and low-risk patients, then
+asserts that the model ranks them correctly.  This test validates that the
+full pipeline (feature extraction → model training → prediction) produces
+clinically plausible output.
+
+This is intentionally slow (trains a real RSF model).
+
+Run with:
+    pytest sanity_check.py -v
 """
 
 import json
-import subprocess
 import os
+import subprocess
 import tempfile
 
-def create_mock_data(n=100):
+import pytest
+
+
+# ---------------------------------------------------------------------------
+# Mock data — clearly separated high-risk vs low-risk
+# ---------------------------------------------------------------------------
+
+def _create_mock_data(n=100):
     patients = []
     for i in range(n):
-        # Evenly distribute some high risk and low risk indicators
         is_high_risk = i % 2 == 0
-        
         patient = {
-            'age_at_diagnosis': 75 if is_high_risk else 35,
-            'therapy_type': 'chemotherapy' if is_high_risk else 'surgery',
-            'id_histology_type': 1,
-            'pathological_m_id': 15 if is_high_risk else 14, # 15=M1, 14=M0
-            'clinical_m_id': 14,
-            'pathological_n_id': 13 if is_high_risk else 7, # 13=N3b, 7=N0
-            'clinical_n_id': 7,
-            'is_alive': not is_high_risk,
-            'diagnosis_date': '2018-06-15',
-            'death_date': '2020-01-01' if is_high_risk else None,
-            'last_follow_up': '2020-01-01' if is_high_risk else '2024-01-01',
-            'recidive': is_high_risk,
-            'date_of_recidive': '2019-01-01' if is_high_risk else None,
-            'date_of_first_post_treatment_follow_up': '2018-06-01'
+            "age_at_diagnosis": 75 if is_high_risk else 35,
+            "therapy_type": "chemotherapy" if is_high_risk else "surgery",
+            "id_histology_type": 1,
+            "pathological_m_id": 15 if is_high_risk else 14,
+            "clinical_m_id": 14,
+            "pathological_n_id": 13 if is_high_risk else 7,
+            "clinical_n_id": 7,
+            "is_alive": not is_high_risk,
+            "diagnosis_date": "2018-06-15",
+            "death_date": "2020-01-01" if is_high_risk else None,
+            "last_follow_up": "2020-01-01" if is_high_risk else "2024-01-01",
+            "recidive": is_high_risk,
+            "date_of_recidive": "2019-01-01" if is_high_risk else None,
+            "date_of_first_post_treatment_follow_up": "2018-06-01",
         }
         patients.append(patient)
     return patients
 
-def run_ml_engine(input_data):
+
+def _run_engine(input_data: dict) -> dict:
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    ml_engine_path = os.path.join(script_dir, 'ml_engine.py')
+    ml_engine_path = os.path.join(script_dir, "ml_engine.py")
     result = subprocess.run(
-        ['python3', ml_engine_path],
+        ["python3", ml_engine_path],
         input=json.dumps(input_data),
         capture_output=True,
-        text=True
+        text=True,
     )
-    if result.returncode != 0:
-        print(f"Error: {result.stderr}")
-        return None
+    assert result.returncode == 0, (
+        f"ml_engine.py exited with code {result.returncode}.\n"
+        f"stderr: {result.stderr}"
+    )
     return json.loads(result.stdout)
 
-def main():
-    print("Running Sanity Check...")
-    
-    with tempfile.NamedTemporaryFile(suffix='.joblib', delete=False) as f:
-        model_path = f.name
 
-    # 1. Train
-    patients = create_mock_data()
-    train_input = {
-        'mode': 'train',
-        'model_type': 'recurrence',
-        'algorithm': 'rsf',
-        'model_path': model_path,
-        'data': {'patients': patients}
-    }
-    
-    train_result = run_ml_engine(train_input)
-    if not train_result or not train_result['success']:
-        print("Training failed")
-        return
+# ---------------------------------------------------------------------------
+# Fixture — train once for all tests in this module
+# ---------------------------------------------------------------------------
 
-    # 2. Predict Low Risk
-    low_risk_patient = {
-        'age_at_diagnosis': 30,
-        'therapy_type': 'surgery',
-        'id_histology_type': 1,
-        'pathological_m_id': 14,
-        'pathological_n_id': 7,
-        'diagnosis_date': '2020-06-15',
-    }
-    
-    predict_low = run_ml_engine({
-        'mode': 'predict',
-        'model_type': 'recurrence',
-        'model_path': model_path,
-        'data': {'patient': low_risk_patient}
+@pytest.fixture(scope="module")
+def trained_model():
+    patients = _create_mock_data()
+    with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as f:
+        path = f.name
+
+    output = _run_engine({
+        "mode": "train",
+        "model_type": "recurrence",
+        "algorithm": "rsf",
+        "model_path": path,
+        "data": {"patients": patients},
     })
+    assert output["success"], f"Training failed: {output.get('error')}"
 
-    # 3. Predict High Risk
-    high_risk_patient = {
-        'age_at_diagnosis': 85,
-        'therapy_type': 'chemotherapy',
-        'id_histology_type': 1,
-        'pathological_m_id': 15,
-        'pathological_n_id': 13,
-        'diagnosis_date': '2020-06-15',
-    }
-    
-    predict_high = run_ml_engine({
-        'mode': 'predict',
-        'model_type': 'recurrence',
-        'model_path': model_path,
-        'data': {'patient': high_risk_patient}
-    })
+    yield path
 
-    # 4. Compare
-    low_score = predict_low['result']['risk_score']
-    high_score = predict_high['result']['risk_score']
-    
-    print(f"Low-risk patient score: {low_score:.4f}")
-    print(f"High-risk patient score: {high_score:.4f}")
-    
-    if high_score > low_score:
-        print("✓ PASS: High-risk patient has a higher risk score.")
-    else:
-        print("✗ FAIL: High-risk patient does NOT have a higher risk score.")
+    if os.path.exists(path):
+        os.remove(path)
 
-    # 5. Check probabilities
-    prob_1y = predict_high['result']['recurrence_probability_1year']
-    prob_5y = predict_high['result']['recurrence_probability_5year']
-    
-    print(f"High-risk 1-year recurrence: {prob_1y:.4f}")
-    print(f"High-risk 5-year recurrence: {prob_5y:.4f}")
-    
-    if prob_5y >= prob_1y:
-        print("✓ PASS: 5-year recurrence prob is >= 1-year recurrence prob.")
-    else:
-        print("✗ FAIL: 5-year recurrence prob is lower than 1-year.")
 
-    if os.path.exists(model_path):
-        os.remove(model_path)
+_low_risk_patient = {
+    "age_at_diagnosis": 30,
+    "therapy_type": "surgery",
+    "id_histology_type": 1,
+    "pathological_m_id": 14,
+    "pathological_n_id": 7,
+    "diagnosis_date": "2020-06-15",
+}
 
-if __name__ == "__main__":
-    main()
+_high_risk_patient = {
+    "age_at_diagnosis": 85,
+    "therapy_type": "chemotherapy",
+    "id_histology_type": 1,
+    "pathological_m_id": 15,
+    "pathological_n_id": 13,
+    "diagnosis_date": "2020-06-15",
+}
+
+
+# ---------------------------------------------------------------------------
+# Plausibility assertions
+# ---------------------------------------------------------------------------
+
+class TestModelPlausibility:
+    def test_high_risk_score_exceeds_low_risk_score(self, trained_model):
+        low = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model,
+            "data": {"patient": _low_risk_patient},
+        })
+        high = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model,
+            "data": {"patient": _high_risk_patient},
+        })
+        assert low["success"] and high["success"]
+        assert high["result"]["risk_score"] > low["result"]["risk_score"], (
+            f"Expected high-risk score ({high['result']['risk_score']:.4f}) > "
+            f"low-risk score ({low['result']['risk_score']:.4f})"
+        )
+
+    def test_5year_recurrence_exceeds_1year_for_high_risk(self, trained_model):
+        output = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model,
+            "data": {"patient": _high_risk_patient},
+        })
+        result = output["result"]
+        assert result["recurrence_probability_5year"] >= result["recurrence_probability_1year"], (
+            f"5-year probability ({result['recurrence_probability_5year']:.4f}) should be >= "
+            f"1-year probability ({result['recurrence_probability_1year']:.4f})"
+        )
+
+    def test_all_probabilities_are_between_0_and_1(self, trained_model):
+        output = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model,
+            "data": {"patient": _high_risk_patient},
+        })
+        result = output["result"]
+        for key in ("recurrence_probability_1year", "recurrence_probability_3year", "recurrence_probability_5year"):
+            assert 0.0 <= result[key] <= 1.0, f"{key} = {result[key]} is out of [0, 1]"
+
+    def test_recurrence_free_and_recurrence_sum_to_one(self, trained_model):
+        output = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model,
+            "data": {"patient": _high_risk_patient},
+        })
+        result = output["result"]
+        for year in ("1year", "3year", "5year"):
+            total = result[f"recurrence_probability_{year}"] + result[f"recurrence_free_probability_{year}"]
+            assert abs(total - 1.0) < 1e-6, f"Probabilities for {year} do not sum to 1: {total}"

@@ -91,16 +91,68 @@ echo '{
 
 ## Testing
 
-Run the test suite with mock data:
+The test suite is split into three levels, each with a distinct purpose.
+
+### Running the tests
+
+Install pytest if not already present:
 
 ```bash
-python3 test_ml_engine.py
+pip3 install pytest
 ```
 
-This will:
-1. Train a model with 60 mock patients
-2. Predict risk score for a single patient
-3. Retrieve model metadata
+**Fast unit tests only** (~1 second):
+
+```bash
+.venv/bin/python -m pytest test_feature_extractor.py test_validators.py -v
+```
+
+**Full suite including integration and behavioural tests** (~minutes):
+
+```bash
+.venv/bin/python -m pytest -v
+```
+
+### Test files
+
+#### `test_feature_extractor.py` — Unit tests
+
+Tests the internal logic of `feature_extractor.py` in isolation, without training any model.
+Each test focuses on a single function with clearly defined inputs and expected outputs.
+
+- **`TestParseTStage`** — Verifies that T-stage string codes (`T1`–`T4`, `T4a`, `T4b`, `TX`) are converted to the correct ordinal value, and that invalid or missing codes return `NaN`.
+- **`TestParseGrade`** — Verifies that overall stage codes (`Stage I`–`Stage IVC`) map correctly to ordinal values, including the edition 2 ambiguity where `Stage IV` (no suffix) maps to 4.
+- **`TestApplyStageFallback`** — Verifies that pathological staging is preferred over clinical, and that the fallback to clinical staging works correctly when pathological data is missing or empty.
+- **`TestCalculateSurvivalTime`** — Verifies that survival time (days from diagnosis to death or last follow-up) is calculated correctly: dead patients use death date, alive patients use last follow-up, and patients with unresolvable dates are excluded (returned as `NaN`). Also checks that durations are clamped to a minimum of 1 day.
+- **`TestCalculateRecurrenceTime`** — Same coverage for recurrence time (days from first post-treatment follow-up to recurrence or last follow-up), including fallback to diagnosis date when treatment date is absent.
+- **`TestExtractTargets`** — Verifies that the correct event indicator and time array are returned for both `overall_survival` and `recurrence` model types, and that an unknown model type raises a `ValueError`.
+
+#### `test_validators.py` — Unit tests
+
+Tests `validate_input()` in `validators.py` in isolation.
+
+- Valid inputs for all three modes (`train`, `predict`, `info`) pass through unchanged.
+- Missing required top-level fields raise a `ValueError` with a message naming the missing field.
+- Missing nested fields (`data.patients`, `data.patient`) raise a `ValueError`.
+- An unknown or missing `mode` raises a `ValueError`.
+
+#### `test_ml_engine.py` — Integration tests
+
+Spawns `ml_engine.py` as a subprocess — the same way the Electron host does — and asserts on the JSON response. A single model is trained once per test session (via a pytest module-scoped fixture) and reused across predict and info tests to avoid redundant training.
+
+- Train mode returns a valid C-index, sample count, event count, and bootstrap C-index.
+- Predict mode returns a risk score in `[0, 1]`, recurrence probabilities for 1, 3, and 5 years, and a list of top risk factors.
+- Info mode returns model metadata with all expected keys.
+- Error paths: too few training patients and a missing model file both produce a `success: false` JSON response with exit code 1.
+
+#### `sanity_check.py` — Behavioural tests
+
+Trains a model on 100 synthetic patients with clearly separated high-risk and low-risk profiles (e.g., age 85 vs. 35, M1 vs. M0, N3b vs. N0) and asserts that the model's output is clinically plausible.
+
+- The high-risk patient receives a higher risk score than the low-risk patient.
+- 5-year recurrence probability is greater than or equal to 1-year probability (monotonicity).
+- All predicted probabilities are within `[0, 1]`.
+- Recurrence and recurrence-free probabilities sum to 1.0 for each time point.
 
 ## Building Standalone Executable
 
