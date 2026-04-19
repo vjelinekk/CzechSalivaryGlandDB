@@ -37,9 +37,41 @@ def _report_progress(progress: int, stage: str) -> None:
     print(json.dumps({"progress": progress, "stage": stage}), file=sys.stderr, flush=True)
 
 
+def run_sidecar() -> None:
+    """Sidecar mode: persistent process that handles predict/info requests in a loop."""
+    _model_cache: dict = {}
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            raw_data = json.loads(line)
+            input_data: InputData = validate_input(raw_data)
+            mode = input_data['mode']
+            if mode == ModelModeEnum.PREDICT:
+                result = handle_predict(input_data, _model_cache)
+            elif mode == ModelModeEnum.INFO:
+                result = handle_info(input_data, _model_cache)
+            else:
+                raise ValueError(f"Sidecar only supports predict/info, got: {mode}")
+            output: SuccessOutputData = {"success": True, "mode": mode, "result": result}
+        except Exception as e:
+            error_msg = str(e) if str(e) else repr(e)
+            output: ErrorOutputData = {"success": False, "error": error_msg}
+            sys.stderr.write(f"Sidecar error: {error_msg}\n")
+            traceback.print_exc(file=sys.stderr)
+        sys.stdout.write(json.dumps(output) + '\n')
+        sys.stdout.flush()
+
+
 def main() -> None:
     """Main entry point - reads stdin, routes to appropriate handler"""
     multiprocessing.freeze_support()
+
+    if '--sidecar' in sys.argv:
+        run_sidecar()
+        return
+
     try:
         # 1. Read and validate JSON from stdin
         raw_data = json.load(sys.stdin)
@@ -150,7 +182,7 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     return metadata
 
 
-def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResult, RecurrencePredictionResult]:
+def handle_predict(input_data: PredictInputData, _model_cache: dict = None) -> Union[SurvivalPredictionResult, RecurrencePredictionResult]:
     """Predict risk score for a single patient"""
     # Extract required fields (already validated by validate_input)
     patient = input_data['data']['patient']
@@ -158,9 +190,14 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
 
     _report_progress(10, "loading_model")
 
-    # Load model and extractor
+    # Load model and extractor (use cache in sidecar mode)
     try:
-        model, extractor, metadata = SurvivalModel.load(model_path)
+        if _model_cache is not None and model_path in _model_cache:
+            model, extractor, metadata = _model_cache[model_path]
+        else:
+            model, extractor, metadata = SurvivalModel.load(model_path)
+            if _model_cache is not None:
+                _model_cache[model_path] = (model, extractor, metadata)
     except FileNotFoundError:
         raise ValueError(f"Model file not found: {model_path}")
     except Exception as e:
@@ -204,7 +241,7 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
     return result
 
 
-def handle_info(input_data: InfoInputData) -> ModelInfoResult:
+def handle_info(input_data: InfoInputData, _model_cache: dict = None) -> ModelInfoResult:
     """Get model metadata without prediction"""
     # Extract required fields (already validated by validate_input)
     model_path = input_data['model_path']
@@ -212,7 +249,12 @@ def handle_info(input_data: InfoInputData) -> ModelInfoResult:
     _report_progress(20, "loading_model")
 
     try:
-        _, _, metadata = SurvivalModel.load(model_path)
+        if _model_cache is not None and model_path in _model_cache:
+            _, _, metadata = _model_cache[model_path]
+        else:
+            model, extractor, metadata = SurvivalModel.load(model_path)
+            if _model_cache is not None:
+                _model_cache[model_path] = (model, extractor, metadata)
     except FileNotFoundError:
         raise ValueError(f"Model file not found: {model_path}")
     except Exception as e:

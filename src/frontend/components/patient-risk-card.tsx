@@ -71,23 +71,12 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
                 setResult(null)
                 setError(null)
 
-                const startTime = Date.now()
-                const minDelay = 400
-
                 try {
                     const saved = await window.ml.getSavedPrediction(
                         patient.id,
                         modelType,
                         algorithm
                     )
-
-                    const elapsedTime = Date.now() - startTime
-                    if (elapsedTime < minDelay) {
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, minDelay - elapsedTime)
-                        )
-                    }
-
                     setResult(saved)
                 } catch (err) {
                     console.error('Failed to load saved prediction:', err)

@@ -5,6 +5,7 @@ import * as mlRepository from '../repositories/mlRepository'
 import { PatientDto } from '../../ipc/dtos/PatientDto'
 import {
     executePythonML,
+    executePythonMLSidecar,
     getBundledModelsDirectory,
     getModelsDirectory,
     ProgressCallback,
@@ -201,7 +202,7 @@ export const calculateRiskScore = async (
         data: { patient: sanitizePatientForML(patient) },
     }
 
-    const output = await executePythonML(input, onProgress)
+    const output = await executePythonMLSidecar(input, onProgress)
     const result = output.result as
         | MLSurvivalPredictionResult
         | MLRecurrencePredictionResult
