@@ -34,6 +34,8 @@ const MLProgressWidget: React.FC<MLProgressWidgetProps> = ({
         progress,
         stage,
         inlineCount,
+        queueTotal,
+        queuePosition,
         completionState,
         clearCompletion,
         cancelOperation,
@@ -43,7 +45,12 @@ const MLProgressWidget: React.FC<MLProgressWidgetProps> = ({
 
     const operationLabel =
         operationType === 'train'
-            ? t(appTranslationKeys.mlTrainingRunning)
+            ? queueTotal > 0
+                ? t(appTranslationKeys.mlRetrainingQueueProgress, {
+                      current: queuePosition,
+                      total: queueTotal,
+                  })
+                : t(appTranslationKeys.mlTrainingRunning)
             : t(appTranslationKeys.mlPredictionRunning)
 
     const snackbarSeverity = completionState

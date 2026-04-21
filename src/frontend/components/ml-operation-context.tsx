@@ -25,12 +25,15 @@ interface MLOperationContextType {
     progress: number | null
     stage: string
     inlineCount: number
+    queueTotal: number
+    queuePosition: number
     completionState: MLCompletionState | null
     clearCompletion: () => void
     startTraining: (
         modelType: MLModelType,
         algorithm: MLAlgorithm
     ) => Promise<MLTrainingResultDto>
+    startTrainingQueue: (jobs: [MLModelType, MLAlgorithm][]) => Promise<void>
     startPrediction: (
         patient: PatientType,
         modelType: MLModelType,
@@ -75,6 +78,8 @@ export const MLOperationProvider: React.FC<{ children: React.ReactNode }> = ({
     const isCancellingRef = useRef(false)
     const inlineCountRef = useRef(0)
     const [inlineCount, setInlineCount] = useState(0)
+    const [queueTotal, setQueueTotal] = useState(0)
+    const [queuePosition, setQueuePosition] = useState(0)
 
     const registerInlineDisplay = useCallback(() => {
         inlineCountRef.current += 1
@@ -167,6 +172,23 @@ export const MLOperationProvider: React.FC<{ children: React.ReactNode }> = ({
         []
     )
 
+    const startTrainingQueue = useCallback(
+        async (jobs: [MLModelType, MLAlgorithm][]): Promise<void> => {
+            setQueueTotal(jobs.length)
+            for (let i = 0; i < jobs.length; i++) {
+                setQueuePosition(i + 1)
+                try {
+                    await startTraining(jobs[i][0], jobs[i][1])
+                } catch {
+                    // continue remaining jobs even if one fails or is cancelled
+                }
+            }
+            setQueueTotal(0)
+            setQueuePosition(0)
+        },
+        [startTraining]
+    )
+
     const startPrediction = useCallback(
         async (
             patient: PatientType,
@@ -255,9 +277,12 @@ export const MLOperationProvider: React.FC<{ children: React.ReactNode }> = ({
                 progress,
                 stage,
                 inlineCount,
+                queueTotal,
+                queuePosition,
                 completionState,
                 clearCompletion,
                 startTraining,
+                startTrainingQueue,
                 startPrediction,
                 cancelOperation,
                 registerInlineDisplay,

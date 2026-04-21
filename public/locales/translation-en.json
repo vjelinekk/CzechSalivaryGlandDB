@@ -168,5 +168,10 @@
     "ml-stage-bootstrap": "Bootstrap validation",
     "ml-stage-saving": "Saving model",
     "ml-stage-loading-model": "Loading model",
-    "ml-stage-predicting": "Predicting risk"
+    "ml-stage-predicting": "Predicting risk",
+    "ml-retraining-recommended-title": "Model retraining recommended",
+    "ml-retraining-recommended-body": "Patient count has grown by 10% since last training. Retrain all 4 models?",
+    "ml-retrain-all": "Retrain all",
+    "ml-retraining-queue-progress": "Training {{current}}/{{total}}",
+    "ml-retraining-queue-complete": "Retraining complete ({{total}} models)"
 }

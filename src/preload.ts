@@ -301,4 +301,10 @@ contextBridge.exposeInMainWorld('ml', {
     cancel: () => {
         ipcRenderer.invoke(ipcMLChannels.mlCancel)
     },
+    onRetrainingRecommended: (callback: () => void) => {
+        ipcRenderer.on(ipcMLChannels.mlRetrainingRecommended, callback)
+    },
+    offRetrainingRecommended: () => {
+        ipcRenderer.removeAllListeners(ipcMLChannels.mlRetrainingRecommended)
+    },
 })

@@ -191,6 +191,8 @@ declare global {
             ) => void
             offProgress: () => void
             cancel: () => void
+            onRetrainingRecommended: (callback: () => void) => void
+            offRetrainingRecommended: () => void
         }
     }
 }

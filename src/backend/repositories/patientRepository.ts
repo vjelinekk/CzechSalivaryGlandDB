@@ -1153,6 +1153,13 @@ const getTTestGroupData = async (
 // Helper Functions
 // =============================================
 
+export const countMalignantPatients = async (): Promise<number> => {
+    const result = await runQuery<{ count: number }>(
+        `SELECT COUNT(*) as count FROM ${TableNames.patient} WHERE tumor_type = 'malignant'`
+    )
+    return result?.count ?? 0
+}
+
 const formTypeToTumorInfo = (
     formType: FormType | number
 ): { tumorType: string; tumorLocation: string } => {

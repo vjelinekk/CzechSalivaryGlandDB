@@ -203,7 +203,8 @@ export const executePythonMLSidecar = async (
         spawnSidecar()
     }
 
-    if (!sidecarProcess) {
+    const process = sidecarProcess
+    if (!process || !process.stdin) {
         throw new Error(
             'ML sidecar is not available. Ensure the ML engine binary is installed.'
         )
@@ -211,7 +212,7 @@ export const executePythonMLSidecar = async (
 
     return new Promise<MLOutputData>((resolve, reject) => {
         pendingSidecarRequest = { resolve, reject, onProgress }
-        sidecarProcess!.stdin.write(JSON.stringify(inputData) + '\n')
+        process.stdin.write(JSON.stringify(inputData) + '\n')
     })
 }
 

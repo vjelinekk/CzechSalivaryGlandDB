@@ -170,5 +170,10 @@
     "ml-stage-bootstrap": "Bootstrap validace",
     "ml-stage-saving": "Ukládání modelu",
     "ml-stage-loading-model": "Načítání modelu",
-    "ml-stage-predicting": "Predikce rizika"
+    "ml-stage-predicting": "Predikce rizika",
+    "ml-retraining-recommended-title": "Doporučujeme přetrénování modelů",
+    "ml-retraining-recommended-body": "Počet pacientů vzrostl o 10 % od posledního trénování. Přetrénovat všechny 4 modely?",
+    "ml-retrain-all": "Přetrénovat vše",
+    "ml-retraining-queue-progress": "Trénování {{current}}/{{total}}",
+    "ml-retraining-queue-complete": "Přetrénování dokončeno ({{total}} modely)"
 }

@@ -475,4 +475,9 @@ export enum appTranslationKeys {
     mlCancelOperation = 'ml-cancel-operation',
     mlViewResults = 'ml-view-results',
     mlViewPatient = 'ml-view-patient',
+    mlRetrainingRecommendedTitle = 'ml-retraining-recommended-title',
+    mlRetrainingRecommendedBody = 'ml-retraining-recommended-body',
+    mlRetrainAll = 'ml-retrain-all',
+    mlRetrainingQueueProgress = 'ml-retraining-queue-progress',
+    mlRetrainingQueueComplete = 'ml-retraining-queue-complete',
 }

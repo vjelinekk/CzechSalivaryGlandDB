@@ -31,8 +31,80 @@ import PlannedChecks from './planned-checks'
 import DescriptiveStatistics from './statistics/descriptive-statistics/descriptive-statistics'
 import InferenceStatistics from './statistics/inference-statistics/inference-statistics'
 import MlRiskScoring from './statistics/ml-risk-scoring/ml-risk-scoring'
-import { MLOperationProvider } from './ml-operation-context'
+import { MLOperationProvider, useMLOperation } from './ml-operation-context'
 import MLProgressWidget from './ml-progress-widget'
+import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import { useTranslation } from 'react-i18next'
+import { appTranslationKeys } from '../translations'
+import { MLAlgorithm, MLModelType } from '../types/ml'
+
+const ALL_TRAINING_JOBS: [MLModelType, MLAlgorithm][] = [
+    ['overall_survival', 'rsf'],
+    ['overall_survival', 'coxph'],
+    ['recurrence', 'rsf'],
+    ['recurrence', 'coxph'],
+]
+
+const RetrainingNotification: React.FC = () => {
+    const { t } = useTranslation()
+    const { startTrainingQueue } = useMLOperation()
+    const [open, setOpen] = useState(false)
+
+    useEffect(() => {
+        window.ml.onRetrainingRecommended(() => setOpen(true))
+        return () => {
+            window.ml.offRetrainingRecommended()
+        }
+    }, [])
+
+    const handleRetrain = () => {
+        setOpen(false)
+        startTrainingQueue(ALL_TRAINING_JOBS)
+    }
+
+    return (
+        <Snackbar
+            open={open}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+            <Alert
+                severity="info"
+                variant="filled"
+                sx={{ width: '100%', alignItems: 'flex-start' }}
+                action={
+                    <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                    >
+                        <Button
+                            color="inherit"
+                            size="small"
+                            onClick={handleRetrain}
+                            sx={{ whiteSpace: 'nowrap' }}
+                        >
+                            {t(appTranslationKeys.mlRetrainAll)}
+                        </Button>
+                        <IconButton
+                            size="small"
+                            color="inherit"
+                            onClick={() => setOpen(false)}
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+                }
+            >
+                <Box>
+                    <strong>
+                        {t(appTranslationKeys.mlRetrainingRecommendedTitle)}
+                    </strong>
+                    <br />
+                    {t(appTranslationKeys.mlRetrainingRecommendedBody)}
+                </Box>
+            </Alert>
+        </Snackbar>
+    )
+}
 
 const app = () => {
     const { activeComponent, setActiveComponent } = useActiveComponent(
@@ -159,6 +231,7 @@ const app = () => {
                 {activeComponent.component === Components.setLanguage && (
                     <SetLanguage />
                 )}
+                <RetrainingNotification />
                 <MLProgressWidget
                     onNavigateToTrainingResults={() => {
                         setActiveComponent({
