@@ -31,6 +31,80 @@ import PlannedChecks from './planned-checks'
 import DescriptiveStatistics from './statistics/descriptive-statistics/descriptive-statistics'
 import InferenceStatistics from './statistics/inference-statistics/inference-statistics'
 import MlRiskScoring from './statistics/ml-risk-scoring/ml-risk-scoring'
+import { MLOperationProvider, useMLOperation } from './ml-operation-context'
+import MLProgressWidget from './ml-progress-widget'
+import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import { useTranslation } from 'react-i18next'
+import { appTranslationKeys } from '../translations'
+import { MLAlgorithm, MLModelType } from '../types/ml'
+
+const ALL_TRAINING_JOBS: [MLModelType, MLAlgorithm][] = [
+    ['overall_survival', 'rsf'],
+    ['overall_survival', 'coxph'],
+    ['recurrence', 'rsf'],
+    ['recurrence', 'coxph'],
+]
+
+const RetrainingNotification: React.FC = () => {
+    const { t } = useTranslation()
+    const { startTrainingQueue } = useMLOperation()
+    const [open, setOpen] = useState(false)
+
+    useEffect(() => {
+        window.ml.onRetrainingRecommended(() => setOpen(true))
+        return () => {
+            window.ml.offRetrainingRecommended()
+        }
+    }, [])
+
+    const handleRetrain = () => {
+        setOpen(false)
+        startTrainingQueue(ALL_TRAINING_JOBS)
+    }
+
+    return (
+        <Snackbar
+            open={open}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+            <Alert
+                severity="info"
+                variant="filled"
+                sx={{ width: '100%', alignItems: 'flex-start' }}
+                action={
+                    <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                    >
+                        <Button
+                            color="inherit"
+                            size="small"
+                            onClick={handleRetrain}
+                            sx={{ whiteSpace: 'nowrap' }}
+                        >
+                            {t(appTranslationKeys.mlRetrainAll)}
+                        </Button>
+                        <IconButton
+                            size="small"
+                            color="inherit"
+                            onClick={() => setOpen(false)}
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+                }
+            >
+                <Box>
+                    <strong>
+                        {t(appTranslationKeys.mlRetrainingRecommendedTitle)}
+                    </strong>
+                    <br />
+                    {t(appTranslationKeys.mlRetrainingRecommendedBody)}
+                </Box>
+            </Alert>
+        </Snackbar>
+    )
+}
 
 const app = () => {
     const { activeComponent, setActiveComponent } = useActiveComponent(
@@ -58,99 +132,122 @@ const app = () => {
 
     return isLoggedIn ? (
         <ImportProvider>
-            <Menu
-                setActiveComponent={setActiveComponent}
-                activeMenuButton={activeMenuButton}
-                setActiveMenuButton={setActiveMenuButton}
-            />
-            {activeComponent.component === Components.patientsList && (
-                <PatientsList
-                    defaultActivePatient={activeComponent.activePatient}
-                />
-            )}
-            {activeComponent.component === Components.plannedChecks && (
-                <PlannedChecks
+            <MLOperationProvider>
+                <Menu
                     setActiveComponent={setActiveComponent}
+                    activeMenuButton={activeMenuButton}
                     setActiveMenuButton={setActiveMenuButton}
                 />
-            )}
-            {activeComponent.component === Components.addPatient && (
-                <AddPatient setActiveComponent={setActiveComponent} />
-            )}
-            {activeComponent.component === Components.addPatientMalignant && (
-                <AddPatientMalignant setActiveComponent={setActiveComponent} />
-            )}
-            {activeComponent.component === Components.AddPatientBenign && (
-                <AddPatientBenign setActiveComponent={setActiveComponent} />
-            )}
-            {activeComponent.component === Components.studiesList && (
-                <StudiesList defaultActiveStudy={activeComponent.activeStudy} />
-            )}
-            {activeComponent.component === Components.addStudy && (
-                <AddStudy setActiveComponent={setActiveComponent} />
-            )}
-            {activeComponent.component ===
-                Components.parotidMalignantGlandForm && (
-                <ParotidMalignantGlandForm
-                    setActiveComponent={setActiveComponent}
-                    defaultFormState={FormStates.add}
-                    setActiveMenuButton={setActiveMenuButton}
+                {activeComponent.component === Components.patientsList && (
+                    <PatientsList
+                        defaultActivePatient={activeComponent.activePatient}
+                    />
+                )}
+                {activeComponent.component === Components.plannedChecks && (
+                    <PlannedChecks
+                        setActiveComponent={setActiveComponent}
+                        setActiveMenuButton={setActiveMenuButton}
+                    />
+                )}
+                {activeComponent.component === Components.addPatient && (
+                    <AddPatient setActiveComponent={setActiveComponent} />
+                )}
+                {activeComponent.component ===
+                    Components.addPatientMalignant && (
+                    <AddPatientMalignant
+                        setActiveComponent={setActiveComponent}
+                    />
+                )}
+                {activeComponent.component === Components.AddPatientBenign && (
+                    <AddPatientBenign setActiveComponent={setActiveComponent} />
+                )}
+                {activeComponent.component === Components.studiesList && (
+                    <StudiesList
+                        defaultActiveStudy={activeComponent.activeStudy}
+                    />
+                )}
+                {activeComponent.component === Components.addStudy && (
+                    <AddStudy setActiveComponent={setActiveComponent} />
+                )}
+                {activeComponent.component ===
+                    Components.parotidMalignantGlandForm && (
+                    <ParotidMalignantGlandForm
+                        setActiveComponent={setActiveComponent}
+                        defaultFormState={FormStates.add}
+                        setActiveMenuButton={setActiveMenuButton}
+                    />
+                )}
+                {activeComponent.component ===
+                    Components.sublingualMalignantGlandForm && (
+                    <SublingualMalignantGlandForm
+                        setActiveComponent={setActiveComponent}
+                        defaultFormState={FormStates.add}
+                        setActiveMenuButton={setActiveMenuButton}
+                    />
+                )}
+                {activeComponent.component ===
+                    Components.submandibularMalignantGlandForm && (
+                    <SubmandibularMalignantGlandForm
+                        setActiveComponent={setActiveComponent}
+                        defaultFormState={FormStates.add}
+                        setActiveMenuButton={setActiveMenuButton}
+                    />
+                )}
+                {activeComponent.component ===
+                    Components.parotidBenignGlandForm && (
+                    <ParotidBenignGlandForm
+                        setActiveComponent={setActiveComponent}
+                        defaultFormState={FormStates.add}
+                        setActiveMenuButton={setActiveMenuButton}
+                    />
+                )}
+                {activeComponent.component ===
+                    Components.submandibularBenignGlandForm && (
+                    <SubmandibularBenignGlandForm
+                        setActiveComponent={setActiveComponent}
+                        defaultFormState={FormStates.add}
+                        setActiveMenuButton={setActiveMenuButton}
+                    />
+                )}
+                {activeComponent.component === Components.study && (
+                    <StudyCreation
+                        setActiveComponent={setActiveComponent}
+                        studyType={activeComponent?.studyType}
+                        setActiveMenuButton={setActiveMenuButton}
+                    />
+                )}
+                {activeComponent.component === Components.kaplanMeier && (
+                    <KaplanMeier />
+                )}
+                {activeComponent.component ===
+                    Components.descriptiveStatistics && (
+                    <DescriptiveStatistics />
+                )}
+                {activeComponent.component ===
+                    Components.inferenceStatistics && <InferenceStatistics />}
+                {activeComponent.component === Components.mlRiskScoring && (
+                    <MlRiskScoring />
+                )}
+                {activeComponent.component === Components.setLanguage && (
+                    <SetLanguage />
+                )}
+                <RetrainingNotification />
+                <MLProgressWidget
+                    onNavigateToTrainingResults={() => {
+                        setActiveComponent({
+                            component: Components.mlRiskScoring,
+                        })
+                        setActiveMenuButton(Components.mlRiskScoring)
+                    }}
+                    onNavigateToPatient={(patient) => {
+                        setActiveComponent({
+                            component: Components.patientsList,
+                            activePatient: patient,
+                        })
+                        setActiveMenuButton(Components.patientsList)
+                    }}
                 />
-            )}
-            {activeComponent.component ===
-                Components.sublingualMalignantGlandForm && (
-                <SublingualMalignantGlandForm
-                    setActiveComponent={setActiveComponent}
-                    defaultFormState={FormStates.add}
-                    setActiveMenuButton={setActiveMenuButton}
-                />
-            )}
-            {activeComponent.component ===
-                Components.submandibularMalignantGlandForm && (
-                <SubmandibularMalignantGlandForm
-                    setActiveComponent={setActiveComponent}
-                    defaultFormState={FormStates.add}
-                    setActiveMenuButton={setActiveMenuButton}
-                />
-            )}
-            {activeComponent.component ===
-                Components.parotidBenignGlandForm && (
-                <ParotidBenignGlandForm
-                    setActiveComponent={setActiveComponent}
-                    defaultFormState={FormStates.add}
-                    setActiveMenuButton={setActiveMenuButton}
-                />
-            )}
-            {activeComponent.component ===
-                Components.submandibularBenignGlandForm && (
-                <SubmandibularBenignGlandForm
-                    setActiveComponent={setActiveComponent}
-                    defaultFormState={FormStates.add}
-                    setActiveMenuButton={setActiveMenuButton}
-                />
-            )}
-            {activeComponent.component === Components.study && (
-                <StudyCreation
-                    setActiveComponent={setActiveComponent}
-                    studyType={activeComponent?.studyType}
-                    setActiveMenuButton={setActiveMenuButton}
-                />
-            )}
-            {activeComponent.component === Components.kaplanMeier && (
-                <KaplanMeier />
-            )}
-            {activeComponent.component === Components.descriptiveStatistics && (
-                <DescriptiveStatistics />
-            )}
-            {activeComponent.component === Components.inferenceStatistics && (
-                <InferenceStatistics />
-            )}
-            {activeComponent.component === Components.mlRiskScoring && (
-                <MlRiskScoring />
-            )}
-            {activeComponent.component === Components.setLanguage && (
-                <SetLanguage />
-            )}
+            </MLOperationProvider>
         </ImportProvider>
     ) : (
         <LoginForm setIsLoggedIn={setIsLoggedIn} />

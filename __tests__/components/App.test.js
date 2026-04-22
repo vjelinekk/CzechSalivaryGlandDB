@@ -80,6 +80,10 @@ beforeAll(() => {
     window.api = {
         get: jest.fn().mockResolvedValue([]),
     }
+    window.ml = {
+        onRetrainingRecommended: jest.fn(),
+        offRetrainingRecommended: jest.fn(),
+    }
     window.fs = {
         loadJson: (filePath) => {
             const fs = require('fs')

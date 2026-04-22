@@ -5,8 +5,10 @@ import * as mlRepository from '../repositories/mlRepository'
 import { PatientDto } from '../../ipc/dtos/PatientDto'
 import {
     executePythonML,
+    executePythonMLSidecar,
     getBundledModelsDirectory,
     getModelsDirectory,
+    ProgressCallback,
 } from '../utils/mlManager'
 import {
     MLTrainInputData,
@@ -72,7 +74,8 @@ const sanitizePatientForML = (patient: PatientDto): MLPatient => {
  */
 export const trainMLModel = async (
     modelType: MLModelType,
-    algorithm: MLAlgorithm
+    algorithm: MLAlgorithm,
+    onProgress?: ProgressCallback
 ): Promise<MLTrainingResultDto> => {
     const allPatients = await getAllPatients()
     const malignantPatients = allPatients.filter(
@@ -88,6 +91,14 @@ export const trainMLModel = async (
     }
 
     const sanitizedPatients = malignantPatients.map(sanitizePatientForML)
+
+    // TEMPORARY: Save sanitized patients to models-validation/data for inspection
+    // const validationDataPath = path.join(
+    //     __dirname,
+    //     '../../models-validation/data/sanitized-patients.json'
+    // )
+    // fs.writeFileSync(validationDataPath, JSON.stringify(sanitizedPatients, null, 2))
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const modelName = `${modelType}_${algorithm}_${timestamp}.joblib`
     const modelPath = path.join(getModelsDirectory(), modelName)
@@ -100,7 +111,7 @@ export const trainMLModel = async (
         data: { patients: sanitizedPatients },
     }
 
-    const output = await executePythonML(input)
+    const output = await executePythonML(input, onProgress)
     const result = output.result as MLTrainResult
 
     // Save to database
@@ -137,7 +148,8 @@ export const calculateRiskScore = async (
     patient: PatientDto,
     modelType: MLModelType,
     algorithm?: MLAlgorithm,
-    recalculate = false
+    recalculate = false,
+    onProgress?: ProgressCallback
 ): Promise<MLPredictionResultDto> => {
     if (
         patient.form_type === undefined ||
@@ -190,7 +202,7 @@ export const calculateRiskScore = async (
         data: { patient: sanitizePatientForML(patient) },
     }
 
-    const output = await executePythonML(input)
+    const output = await executePythonMLSidecar(input, onProgress)
     const result = output.result as
         | MLSurvivalPredictionResult
         | MLRecurrencePredictionResult

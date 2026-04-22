@@ -186,6 +186,13 @@ declare global {
                 modelType: 'overall_survival' | 'recurrence',
                 algorithm: 'rsf' | 'coxph'
             ) => Promise<MLPredictionResultDto | null>
+            onProgress: (
+                callback: (data: { progress: number; stage: string }) => void
+            ) => void
+            offProgress: () => void
+            cancel: () => void
+            onRetrainingRecommended: (callback: () => void) => void
+            offRetrainingRecommended: () => void
         }
     }
 }

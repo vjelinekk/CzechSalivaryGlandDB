@@ -32,9 +32,46 @@ from validators import validate_input
 from typing import Union
 
 
+def _report_progress(progress: int, stage: str) -> None:
+    """Emit a structured progress message to stderr for the host process to consume."""
+    print(json.dumps({"progress": progress, "stage": stage}), file=sys.stderr, flush=True)
+
+
+def run_sidecar() -> None:
+    """Sidecar mode: persistent process that handles predict/info requests in a loop."""
+    _model_cache: dict = {}
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            raw_data = json.loads(line)
+            input_data: InputData = validate_input(raw_data)
+            mode = input_data['mode']
+            if mode == ModelModeEnum.PREDICT:
+                result = handle_predict(input_data, _model_cache)
+            elif mode == ModelModeEnum.INFO:
+                result = handle_info(input_data, _model_cache)
+            else:
+                raise ValueError(f"Sidecar only supports predict/info, got: {mode}")
+            output: SuccessOutputData = {"success": True, "mode": mode, "result": result}
+        except Exception as e:
+            error_msg = str(e) if str(e) else repr(e)
+            output: ErrorOutputData = {"success": False, "error": error_msg}
+            sys.stderr.write(f"Sidecar error: {error_msg}\n")
+            traceback.print_exc(file=sys.stderr)
+        sys.stdout.write(json.dumps(output) + '\n')
+        sys.stdout.flush()
+
+
 def main() -> None:
     """Main entry point - reads stdin, routes to appropriate handler"""
     multiprocessing.freeze_support()
+
+    if '--sidecar' in sys.argv:
+        run_sidecar()
+        return
+
     try:
         # 1. Read and validate JSON from stdin
         raw_data = json.load(sys.stdin)
@@ -87,6 +124,8 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     if len(patients) < 50:
         raise ValueError(f"Insufficient training data: {len(patients)} patients (need at least 50)")
 
+    _report_progress(5, "preparing")
+
     # Extract features
     extractor = FeatureExtractor()
     X, y_event, y_time, feature_names = extractor.fit_transform(patients, model_type)
@@ -96,18 +135,32 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     if n_events < 15:
         raise ValueError(f"Insufficient events: {n_events} events (need at least 15)")
 
+    _report_progress(15, "extracting_features")
+
     # Train model
     model = SurvivalModel(algorithm=algorithm)
     model.fit(X, y_event, y_time)
 
+    _report_progress(30, "training_model")
+
     # Calculate feature importance (permutation for RSF, coefficients for CoxPH)
     model.calculate_feature_importance(X, y_event, y_time, n_repeats=10)
+
+    _report_progress(48, "feature_importance")
 
     # Apparent C-index (training set — optimistically biased)
     c_index = model.get_c_index(X, y_event, y_time)
 
+    _report_progress(55, "c_index")
+
     # Bootstrap .632 C-index — honest generalisation estimate
-    bootstrap = bootstrap_validate(patients, model_type, algorithm, c_index)
+    def _bootstrap_progress(iteration: int, total: int) -> None:
+        pct = 55 + int((iteration / total) * 42)
+        _report_progress(pct, "bootstrap")
+
+    bootstrap = bootstrap_validate(patients, model_type, algorithm, c_index, on_progress=_bootstrap_progress)
+
+    _report_progress(97, "saving")
 
     # Save model with metadata
     metadata: TrainResultMetadata = {
@@ -124,28 +177,41 @@ def handle_train(input_data: TrainInputData) -> TrainResultMetadata:
     }
     model.save(model_path, metadata, extractor)
 
+    _report_progress(100, "saving")
+
     return metadata
 
 
-def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResult, RecurrencePredictionResult]:
+def handle_predict(input_data: PredictInputData, _model_cache: dict = None) -> Union[SurvivalPredictionResult, RecurrencePredictionResult]:
     """Predict risk score for a single patient"""
     # Extract required fields (already validated by validate_input)
     patient = input_data['data']['patient']
     model_path = input_data['model_path']
 
-    # Load model and extractor
+    _report_progress(10, "loading_model")
+
+    # Load model and extractor (use cache in sidecar mode)
     try:
-        model, extractor, metadata = SurvivalModel.load(model_path)
+        if _model_cache is not None and model_path in _model_cache:
+            model, extractor, metadata = _model_cache[model_path]
+        else:
+            model, extractor, metadata = SurvivalModel.load(model_path)
+            if _model_cache is not None:
+                _model_cache[model_path] = (model, extractor, metadata)
     except FileNotFoundError:
         raise ValueError(f"Model file not found: {model_path}")
     except Exception as e:
         raise ValueError(f"Failed to load model: {e}")
+
+    _report_progress(55, "extracting_features")
 
     # Extract features for single patient
     X = extractor.transform([patient])
 
     # Get model type from metadata
     model_type = metadata['model_type']
+
+    _report_progress(80, "predicting")
 
     # Calculate risk score and probabilities (survival or recurrence based on model type)
     result = model.predict_risk(X, model_type=model_type)
@@ -169,20 +235,32 @@ def handle_predict(input_data: PredictInputData) -> Union[SurvivalPredictionResu
         top_factors = []
 
     result['top_risk_factors'] = top_factors
+
+    _report_progress(100, "predicting")
+
     return result
 
 
-def handle_info(input_data: InfoInputData) -> ModelInfoResult:
+def handle_info(input_data: InfoInputData, _model_cache: dict = None) -> ModelInfoResult:
     """Get model metadata without prediction"""
     # Extract required fields (already validated by validate_input)
     model_path = input_data['model_path']
 
+    _report_progress(20, "loading_model")
+
     try:
-        _, _, metadata = SurvivalModel.load(model_path)
+        if _model_cache is not None and model_path in _model_cache:
+            _, _, metadata = _model_cache[model_path]
+        else:
+            model, extractor, metadata = SurvivalModel.load(model_path)
+            if _model_cache is not None:
+                _model_cache[model_path] = (model, extractor, metadata)
     except FileNotFoundError:
         raise ValueError(f"Model file not found: {model_path}")
     except Exception as e:
         raise ValueError(f"Failed to load model: {e}")
+
+    _report_progress(100, "loading_model")
 
     return {'model_metadata': metadata}
 

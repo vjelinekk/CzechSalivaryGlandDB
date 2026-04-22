@@ -38,12 +38,39 @@ import {
     ipcAPIInsertChannels,
     ipcAPISaveChannels,
     ipcAPIUpdateChannels,
+    ipcMLChannels,
 } from './ipcChannels'
-import { getPatientsInStudy } from '../backend/repositories/patientRepository'
+import {
+    getPatientsInStudy,
+    countMalignantPatients,
+} from '../backend/repositories/patientRepository'
+import { getAllMLModels } from '../backend/repositories/mlRepository'
+
+let retrainingNotificationSent = false
 
 ipcMain.handle(ipcAPISaveChannels.savePatient, async (event, args) => {
     const [data] = args
-    return await savePatient(data)
+    const result = await savePatient(data)
+
+    if (!retrainingNotificationSent) {
+        const [currentCount, allModels] = await Promise.all([
+            countMalignantPatients(),
+            getAllMLModels(),
+        ])
+        const activeModels = allModels.filter((m) => m.is_active === 1)
+        const thresholdExceeded =
+            activeModels.length > 0 &&
+            activeModels.some((m) => currentCount >= m.n_samples * 1.1)
+
+        if (thresholdExceeded) {
+            retrainingNotificationSent = true
+            if (!event.sender.isDestroyed()) {
+                event.sender.send(ipcMLChannels.mlRetrainingRecommended)
+            }
+        }
+    }
+
+    return result
 })
 
 ipcMain.handle(ipcAPISaveChannels.saveStudy, async (event, args) => {

@@ -7,6 +7,7 @@ import {
     deleteModel,
     getSavedPrediction,
 } from '../backend/services/mlService'
+import { cancelPythonML } from '../backend/utils/mlManager'
 import { ipcMLChannels } from './ipcChannels'
 import { MLModelType, MLAlgorithm } from '../backend/types/ml'
 import { PatientDto } from './dtos/PatientDto'
@@ -15,7 +16,12 @@ ipcMain.handle(
     ipcMLChannels.trainModel,
     async (event, args: [MLModelType, MLAlgorithm]) => {
         const [modelType, algorithm] = args
-        return await trainMLModel(modelType, algorithm)
+        const onProgress = (progress: number, stage: string) => {
+            if (!event.sender.isDestroyed()) {
+                event.sender.send(ipcMLChannels.mlProgress, { progress, stage })
+            }
+        }
+        return await trainMLModel(modelType, algorithm, onProgress)
     }
 )
 
@@ -23,11 +29,17 @@ ipcMain.handle(
     ipcMLChannels.calculateRiskScore,
     async (event, args: [PatientDto, MLModelType, MLAlgorithm?, boolean?]) => {
         const [patient, modelType, algorithm, recalculate] = args
+        const onProgress = (progress: number, stage: string) => {
+            if (!event.sender.isDestroyed()) {
+                event.sender.send(ipcMLChannels.mlProgress, { progress, stage })
+            }
+        }
         return await calculateRiskScore(
             patient,
             modelType,
             algorithm,
-            recalculate
+            recalculate,
+            onProgress
         )
     }
 )
@@ -53,4 +65,8 @@ ipcMain.handle(ipcMLChannels.setActiveModel, async (event, id: number) => {
 
 ipcMain.handle(ipcMLChannels.deleteModel, async (event, id: number) => {
     return await deleteModel(id)
+})
+
+ipcMain.handle(ipcMLChannels.mlCancel, () => {
+    cancelPythonML()
 })

@@ -82,4 +82,7 @@ export enum ipcMLChannels {
     setActiveModel = 'setActiveModel',
     deleteModel = 'deleteModel',
     getSavedPrediction = 'getSavedPrediction',
+    mlProgress = 'mlProgress',
+    mlCancel = 'mlCancel',
+    mlRetrainingRecommended = 'mlRetrainingRecommended',
 }

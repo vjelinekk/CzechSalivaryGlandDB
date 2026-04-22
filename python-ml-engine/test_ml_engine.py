@@ -1,237 +1,265 @@
 #!/usr/bin/env python3
 """
-Test script for ML engine
-Creates mock patient data and tests train/predict/info modes
+Integration tests for the ML engine (train / predict / info modes).
+
+Spawns ml_engine.py as a subprocess — the same way the Electron host does —
+and asserts on the JSON response.  These tests are slow (~minutes) because
+they train a real Random Survival Forest model.
+
+Run with:
+    pytest test_ml_engine.py -v
 """
 
 import json
+import os
 import subprocess
 import tempfile
-import os
 
-# Mock patient data (malignant patients only)
-# SIMPLIFIED 5-FEATURE MODEL:
-# 1. age_at_diagnosis (numeric)
-# 2. therapy_type (categorical string)
-# 3. id_histology_type (categorical, IDs 1-24)
-# 4. pathological_m_id with fallback to clinical_m_id (IDs 14-15)
-# 5. pathological_n_id with fallback to clinical_n_id (IDs 7-13)
+import pytest
 
-mock_patients = []
-for i in range(60):  # Create 60 patients (minimum 50 required)
-    patient = {
-        # Feature 1: Age at diagnosis (50-79 years)
-        'age_at_diagnosis': 50 + (i % 30),
+# ---------------------------------------------------------------------------
+# Shared mock patient data (60 patients, minimum 50 required to train)
+# ---------------------------------------------------------------------------
 
-        # Feature 2: Therapy type (categorical string)
-        'therapy_type': ['surgery', 'radiotherapy', 'chemoradiotherapy', 'chemotherapy'][i % 4],
-
-        # Feature 3: Histology type (IDs 1-24)
-        'id_histology_type': 1 + (i % 24),
-
-        # Feature 4 & 5: TNM staging (IDs from tnm_value_definition)
-        # M stage: 14=M0, 15=M1
-        'pathological_m_id': 14 if i % 10 != 0 else 15,  # Most M0, some M1
-        'clinical_m_id': 14,  # Fallback for cases without pathological
-
-        # N stage: 7=N0, 8=N1, 9=N2a, 10=N2b, 11=N2c, 12=N3a, 13=N3b
-        'pathological_n_id': 7 + (i % 7),
-        'clinical_n_id': 7 + (i % 5),  # Fallback with less variation
-
-        # Outcome variables
-        'is_alive': i % 3 == 0,  # 1/3 alive, 2/3 dead
-        'diagnosis_date': f"20{15 + (i % 8)}-06-15",
-        'death_date': None if i % 3 == 0 else f"202{2 + (i % 3)}-06-15",
-        'last_follow_up': '2024-01-01' if i % 3 == 0 else f"202{2 + (i % 3)}-06-15",
-        'recidive': i % 2 == 0,  # 1/2 recurrence rate (50% → 30 events for 60 patients)
-        'date_of_recidive': f"202{1 + (i % 3)}-03-10" if i % 2 == 0 else None,
-        'date_of_first_post_treatment_follow_up': f"20{15 + (i % 8)}-06-01",
+_mock_patients = []
+for _i in range(60):
+    _patient = {
+        "age_at_diagnosis": 50 + (_i % 30),
+        "therapy_type": ["surgery", "radiotherapy", "chemoradiotherapy", "chemotherapy"][_i % 4],
+        "id_histology_type": 1 + (_i % 24),
+        "pathological_m_id": 14 if _i % 10 != 0 else 15,
+        "clinical_m_id": 14,
+        "pathological_n_id": 7 + (_i % 7),
+        "clinical_n_id": 7 + (_i % 5),
+        "is_alive": _i % 3 == 0,
+        "diagnosis_date": f"20{15 + (_i % 8)}-06-15",
+        "death_date": None if _i % 3 == 0 else f"202{2 + (_i % 3)}-06-15",
+        "last_follow_up": "2024-01-01" if _i % 3 == 0 else f"202{2 + (_i % 3)}-06-15",
+        "recidive": _i % 2 == 0,
+        "date_of_recidive": f"202{1 + (_i % 3)}-03-10" if _i % 2 == 0 else None,
+        "date_of_first_post_treatment_follow_up": f"20{15 + (_i % 8)}-06-01",
     }
-
-    # For some patients, use clinical stage as primary (no pathological)
-    if i % 15 == 0:
-        patient['pathological_m_id'] = None
-        patient['pathological_n_id'] = None
-
-    mock_patients.append(patient)
+    if _i % 15 == 0:
+        _patient["pathological_m_id"] = None
+        _patient["pathological_n_id"] = None
+    _mock_patients.append(_patient)
 
 
-def test_train_mode():
-    """Test training a model"""
-    print("=" * 60)
-    print("TEST 1: TRAIN MODE")
-    print("=" * 60)
+# ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
 
-    # Create temporary model file
-    with tempfile.NamedTemporaryFile(suffix='.joblib', delete=False) as f:
-        model_path = f.name
-
-    # Prepare input
-    input_data = {
-        'mode': 'train',
-        'model_type': 'recurrence',  # Changed to recurrence to show recurrence probabilities
-        'algorithm': 'rsf',
-        'model_path': model_path,
-        'data': {
-            'patients': mock_patients
-        }
-    }
-
-    # Run ml_engine.py (from same directory as this test script)
+def _run_engine(input_data: dict) -> dict:
+    """Invoke ml_engine.py as a subprocess and return parsed JSON output."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    ml_engine_path = os.path.join(script_dir, 'ml_engine.py')
+    ml_engine_path = os.path.join(script_dir, "ml_engine.py")
     result = subprocess.run(
-        ['python3', ml_engine_path],
+        ["python3", ml_engine_path],
         input=json.dumps(input_data),
         capture_output=True,
-        text=True
+        text=True,
     )
-
-    print(f"Exit code: {result.returncode}")
-    print(f"Stdout:\n{result.stdout}")
-    if result.stderr:
-        print(f"Stderr:\n{result.stderr}")
-
-    if result.returncode == 0:
-        output = json.loads(result.stdout)
-        if output['success']:
-            print(f"\n✓ Training succeeded!")
-            print(f"  C-index: {output['result']['c_index']:.3f}")
-            print(f"  Samples: {output['result']['n_samples']}")
-            print(f"  Events: {output['result']['n_events']}")
-            return model_path
-        else:
-            print(f"\n✗ Training failed: {output['error']}")
-            return None
-    else:
-        print(f"\n✗ Process failed with exit code {result.returncode}")
-        return None
+    assert result.returncode == 0, (
+        f"ml_engine.py exited with code {result.returncode}.\n"
+        f"stdout: {result.stdout}\n"
+        f"stderr: {result.stderr}"
+    )
+    return json.loads(result.stdout)
 
 
-def test_predict_mode(model_path):
-    """Test predicting risk score"""
-    print("\n" + "=" * 60)
-    print("TEST 2: PREDICT MODE")
-    print("=" * 60)
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
-    if not model_path or not os.path.exists(model_path):
-        print("✗ Skipping (no model available)")
-        return
+@pytest.fixture(scope="module")
+def trained_model_path():
+    """Train a model once for the whole module and clean up afterwards."""
+    with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as f:
+        path = f.name
 
-    # Prepare input with a single patient
     input_data = {
-        'mode': 'predict',
-        'model_type': 'recurrence',  # Match the training model type
-        'model_path': model_path,
-        'data': {
-            'patient': mock_patients[0]
-        }
+        "mode": "train",
+        "model_type": "recurrence",
+        "algorithm": "rsf",
+        "model_path": path,
+        "data": {"patients": _mock_patients},
     }
+    output = _run_engine(input_data)
+    assert output["success"], f"Training failed: {output.get('error')}"
 
-    # Run ml_engine.py (from same directory as this test script)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    ml_engine_path = os.path.join(script_dir, 'ml_engine.py')
-    result = subprocess.run(
-        ['python3', ml_engine_path],
-        input=json.dumps(input_data),
-        capture_output=True,
-        text=True
-    )
+    yield path
 
-    print(f"Exit code: {result.returncode}")
-    print(f"Stdout:\n{result.stdout}")
-    if result.stderr:
-        print(f"Stderr:\n{result.stderr}")
+    if os.path.exists(path):
+        os.remove(path)
 
-    if result.returncode == 0:
+
+# ---------------------------------------------------------------------------
+# Train mode
+# ---------------------------------------------------------------------------
+
+class TestTrainMode:
+    def test_success_flag_is_true(self, trained_model_path):
+        # Training is done by the fixture; re-run a quick check via info
+        assert os.path.exists(trained_model_path)
+
+    def test_train_returns_c_index(self):
+        with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as f:
+            path = f.name
+        try:
+            output = _run_engine({
+                "mode": "train",
+                "model_type": "overall_survival",
+                "algorithm": "rsf",
+                "model_path": path,
+                "data": {"patients": _mock_patients},
+            })
+            assert output["success"]
+            assert "c_index" in output["result"]
+            assert 0.0 <= output["result"]["c_index"] <= 1.0
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
+
+    def test_train_returns_sample_and_event_counts(self, trained_model_path):
+        output = _run_engine({
+            "mode": "info",
+            "model_path": trained_model_path,
+        })
+        meta = output["result"]["model_metadata"]
+        assert meta["n_samples"] == 60
+        assert meta["n_events"] >= 15
+
+    def test_train_returns_bootstrap_c_index(self, trained_model_path):
+        output = _run_engine({
+            "mode": "info",
+            "model_path": trained_model_path,
+        })
+        meta = output["result"]["model_metadata"]
+        assert "bootstrap_c_index" in meta
+        assert 0.0 <= meta["bootstrap_c_index"] <= 1.0
+
+    def test_train_fails_with_too_few_patients(self):
+        with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as f:
+            path = f.name
+        try:
+            result = subprocess.run(
+                ["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "ml_engine.py")],
+                input=json.dumps({
+                    "mode": "train",
+                    "model_type": "recurrence",
+                    "algorithm": "rsf",
+                    "model_path": path,
+                    "data": {"patients": _mock_patients[:10]},
+                }),
+                capture_output=True,
+                text=True,
+            )
+            assert result.returncode == 1
+            output = json.loads(result.stdout)
+            assert not output["success"]
+            assert "error" in output
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
+
+
+# ---------------------------------------------------------------------------
+# Predict mode
+# ---------------------------------------------------------------------------
+
+class TestPredictMode:
+    def test_predict_returns_risk_score(self, trained_model_path):
+        output = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model_path,
+            "data": {"patient": _mock_patients[0]},
+        })
+        assert output["success"]
+        assert "risk_score" in output["result"]
+        assert 0.0 <= output["result"]["risk_score"] <= 1.0
+
+    def test_predict_returns_recurrence_probabilities(self, trained_model_path):
+        output = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model_path,
+            "data": {"patient": _mock_patients[0]},
+        })
+        result = output["result"]
+        assert "recurrence_probability_1year" in result
+        assert "recurrence_probability_3year" in result
+        assert "recurrence_probability_5year" in result
+
+    def test_predict_probabilities_increase_over_time(self, trained_model_path):
+        output = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model_path,
+            "data": {"patient": _mock_patients[0]},
+        })
+        result = output["result"]
+        assert result["recurrence_probability_5year"] >= result["recurrence_probability_1year"]
+
+    def test_predict_returns_top_risk_factors(self, trained_model_path):
+        output = _run_engine({
+            "mode": "predict",
+            "model_type": "recurrence",
+            "model_path": trained_model_path,
+            "data": {"patient": _mock_patients[0]},
+        })
+        factors = output["result"].get("top_risk_factors", [])
+        assert isinstance(factors, list)
+
+    def test_predict_fails_with_missing_model(self):
+        result = subprocess.run(
+            ["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "ml_engine.py")],
+            input=json.dumps({
+                "mode": "predict",
+                "model_type": "recurrence",
+                "model_path": "/nonexistent/model.joblib",
+                "data": {"patient": _mock_patients[0]},
+            }),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
         output = json.loads(result.stdout)
-        if output['success']:
-            print(f"\n✓ Prediction succeeded!")
-            result_data = output['result']
-            print(f"  Risk Score: {result_data['risk_score']:.3f}")
-            # Check which type of probabilities are returned
-            if 'recurrence_probability_1year' in result_data:
-                print(f"  1-year recurrence: {result_data['recurrence_probability_1year']:.3f}")
-                print(f"  3-year recurrence: {result_data['recurrence_probability_3year']:.3f}")
-                print(f"  5-year recurrence: {result_data['recurrence_probability_5year']:.3f}")
-                print(f"  1-year recurrence-free: {result_data['recurrence_free_probability_1year']:.3f}")
-                print(f"  3-year recurrence-free: {result_data['recurrence_free_probability_3year']:.3f}")
-                print(f"  5-year recurrence-free: {result_data['recurrence_free_probability_5year']:.3f}")
-            else:
-                print(f"  1-year survival: {result_data['survival_probability_1year']:.3f}")
-                print(f"  3-year survival: {result_data['survival_probability_3year']:.3f}")
-                print(f"  5-year survival: {result_data['survival_probability_5year']:.3f}")
-            print(f"  Top risk factors:")
-            for factor in result_data.get('top_risk_factors', []):
-                print(f"    - {factor['feature']}: {factor['importance']:.3f}")
-        else:
-            print(f"\n✗ Prediction failed: {output['error']}")
-    else:
-        print(f"\n✗ Process failed with exit code {result.returncode}")
+        assert not output["success"]
 
 
-def test_info_mode(model_path):
-    """Test getting model info"""
-    print("\n" + "=" * 60)
-    print("TEST 3: INFO MODE")
-    print("=" * 60)
+# ---------------------------------------------------------------------------
+# Info mode
+# ---------------------------------------------------------------------------
 
-    if not model_path or not os.path.exists(model_path):
-        print("✗ Skipping (no model available)")
-        return
+class TestInfoMode:
+    def test_info_returns_metadata(self, trained_model_path):
+        output = _run_engine({
+            "mode": "info",
+            "model_path": trained_model_path,
+        })
+        assert output["success"]
+        assert "model_metadata" in output["result"]
 
-    # Prepare input
-    input_data = {
-        'mode': 'info',
-        'model_path': model_path
-    }
+    def test_info_metadata_has_expected_keys(self, trained_model_path):
+        output = _run_engine({
+            "mode": "info",
+            "model_path": trained_model_path,
+        })
+        meta = output["result"]["model_metadata"]
+        for key in ("algorithm", "model_type", "training_date", "c_index", "n_samples", "n_events"):
+            assert key in meta, f"Missing key: {key}"
 
-    # Run ml_engine.py (from same directory as this test script)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    ml_engine_path = os.path.join(script_dir, 'ml_engine.py')
-    result = subprocess.run(
-        ['python3', ml_engine_path],
-        input=json.dumps(input_data),
-        capture_output=True,
-        text=True
-    )
-
-    print(f"Exit code: {result.returncode}")
-    print(f"Stdout:\n{result.stdout}")
-    if result.stderr:
-        print(f"Stderr:\n{result.stderr}")
-
-    if result.returncode == 0:
+    def test_info_fails_with_missing_model(self):
+        result = subprocess.run(
+            ["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "ml_engine.py")],
+            input=json.dumps({
+                "mode": "info",
+                "model_path": "/nonexistent/model.joblib",
+            }),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
         output = json.loads(result.stdout)
-        if output['success']:
-            print(f"\n✓ Info retrieval succeeded!")
-            metadata = output['result']['model_metadata']
-            print(f"  Algorithm: {metadata.get('algorithm')}")
-            print(f"  Model type: {metadata.get('model_type')}")
-            print(f"  Training date: {metadata.get('training_date')}")
-            print(f"  C-index: {metadata.get('c_index', 0):.3f}")
-        else:
-            print(f"\n✗ Info retrieval failed: {output['error']}")
-    else:
-        print(f"\n✗ Process failed with exit code {result.returncode}")
-
-
-if __name__ == '__main__':
-    print("ML Engine Test Suite")
-    print("=" * 60)
-    print(f"Testing with {len(mock_patients)} mock patients")
-    print()
-
-    # Run tests
-    model_path = test_train_mode()
-    test_predict_mode(model_path)
-    test_info_mode(model_path)
-
-    # Cleanup
-    if model_path and os.path.exists(model_path):
-        os.remove(model_path)
-        print(f"\n✓ Cleaned up temporary model file")
-
-    print("\n" + "=" * 60)
-    print("All tests complete!")
-    print("=" * 60)
+        assert not output["success"]

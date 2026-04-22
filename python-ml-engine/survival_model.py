@@ -270,6 +270,7 @@ def bootstrap_validate(
     c_apparent: float,
     n_bootstrap: int = 200,
     random_state: int = 42,
+    on_progress=None,
 ) -> dict:
     """
     Estimate generalisation performance via bootstrap and return the .632 corrected C-index.
@@ -297,6 +298,9 @@ def bootstrap_validate(
     skipped = 0
 
     for iteration in range(n_bootstrap):
+        if on_progress is not None and iteration % 5 == 0:
+            on_progress(iteration, n_bootstrap)
+
         boot_idx = rng.integers(0, n, size=n)
         oob_idx = np.setdiff1d(np.arange(n), boot_idx)
 
