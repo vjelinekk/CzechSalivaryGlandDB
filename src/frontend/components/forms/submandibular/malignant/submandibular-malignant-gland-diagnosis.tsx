@@ -77,10 +77,10 @@ const SubmandibularMalignantGlandDiagnosis: React.FC<GlandComponentProps> = ({
                 enableSingleSelect={false}
                 options={[
                     formTranslationKeys.methodUz,
-                    formTranslationKeys.ct,
-                    formTranslationKeys.mri,
-                    formTranslationKeys.petCt,
-                    formTranslationKeys.petMr,
+                    formTranslationKeys.methodCt,
+                    formTranslationKeys.methodMri,
+                    formTranslationKeys.methodPetCt,
+                    formTranslationKeys.methodPetMr,
                     formTranslationKeys.noImagingPerformed,
                 ]}
                 translate={true}
