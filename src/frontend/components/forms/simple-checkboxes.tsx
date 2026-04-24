@@ -30,9 +30,10 @@ const SimpleCheckboxes: React.FC<SimpleCheckboxesProps> = ({
         useSingleSelection({
             enableSingleSelect,
             defaultSelected: getDataFromPatientInterface(data, dbLabel)
-                ? (getDataFromPatientInterface(data, dbLabel) as string).split(
-                      ','
-                  )
+                ? (getDataFromPatientInterface(data, dbLabel) as string)
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
                 : [''],
             dbLabel,
             setFormData,
@@ -49,7 +50,12 @@ const SimpleCheckboxes: React.FC<SimpleCheckboxesProps> = ({
             }
         } else {
             if (storedData) {
-                setSelectedOptions((storedData as string).split(','))
+                setSelectedOptions(
+                    (storedData as string)
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                )
             } else {
                 setSelectedOptions([])
             }

@@ -622,7 +622,7 @@ export class PatientMapper {
             : null
 
         if (type === 'core') {
-            dto.core_biopsie = 'Ano'
+            dto.core_biopsie = 'yes'
             dto.core_vysledek = histologyKey
             if (subtypeKey && histologyKey) {
                 const subtypeField =
@@ -638,7 +638,7 @@ export class PatientMapper {
                 }
             }
         } else {
-            dto.otevrena_biopsie = 'Ano'
+            dto.otevrena_biopsie = 'yes'
             dto.otevrena_vysledek = histologyKey
             if (subtypeKey && histologyKey) {
                 const subtypeField =
