@@ -95,6 +95,8 @@ const schemaQueries = [
         diagnosis_methods TEXT,
         fnab INTEGER, -- boolean
         fnab_result TEXT,
+        core_biopsie TEXT, -- 'yes' or 'no'
+        otevrena_biopsie TEXT, -- 'yes' or 'no'
         date_of_treatment_initiation TEXT, -- date
         therapy_type TEXT,
         extent_of_surgical_treatment TEXT,
