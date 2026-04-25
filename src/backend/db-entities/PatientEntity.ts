@@ -24,6 +24,8 @@ export interface PatientEntity {
     // fnab related fields kept on patient for simplicity per design
     fnab: number // boolean
     fnab_result: string
+    core_biopsie?: string
+    otevrena_biopsie?: string
     date_of_treatment_initiation: string
     therapy_type: string
     extent_of_surgical_treatment: string

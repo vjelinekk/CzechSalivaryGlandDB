@@ -20,7 +20,9 @@ function buildReverseMap(): Record<string, string> {
     const map: Record<string, string> = {}
     for (const locale of allLocales) {
         for (const [key, value] of Object.entries(locale)) {
-            if (typeof value === 'string') {
+            // First-write wins: method-prefixed keys (e.g. method-ct) appear before
+            // their short aliases (ct) in the JSON files, so first match is correct.
+            if (typeof value === 'string' && map[value] === undefined) {
                 map[value] = key
             }
         }
@@ -87,7 +89,7 @@ function mapCommaValue(value: string): string {
     return value
         .split(',')
         .map((v) => mapSingleValue(v.trim()))
-        .join(', ')
+        .join(',')
 }
 
 /**

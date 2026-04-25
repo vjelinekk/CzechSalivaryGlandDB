@@ -144,6 +144,8 @@ export class PatientMapper {
             diagnosis_methods: toStr(patient.diagnosticke_metody),
             fnab: toIntBool(patient.fnab),
             fnab_result: toStr(patient.vysledek_fnab),
+            core_biopsie: toStr(patient.core_biopsie),
+            otevrena_biopsie: toStr(patient.otevrena_biopsie),
             date_of_treatment_initiation: toStr(patient.datum_zahajeni_lecby),
             therapy_type: toStr(patient.typ_terapie),
             extent_of_surgical_treatment: toStr(
@@ -460,6 +462,8 @@ export class PatientMapper {
             diagnosticke_metody: base.diagnosis_methods,
             fnab: fromIntBool(base.fnab),
             vysledek_fnab: base.fnab_result,
+            core_biopsie: base.core_biopsie ?? null,
+            otevrena_biopsie: base.otevrena_biopsie ?? null,
             datum_zahajeni_lecby: base.date_of_treatment_initiation,
             typ_terapie:
                 base.therapy_type === 'chirurgical'
@@ -622,7 +626,7 @@ export class PatientMapper {
             : null
 
         if (type === 'core') {
-            dto.core_biopsie = 'yes'
+            if (!dto.core_biopsie) dto.core_biopsie = 'yes'
             dto.core_vysledek = histologyKey
             if (subtypeKey && histologyKey) {
                 const subtypeField =
@@ -638,7 +642,7 @@ export class PatientMapper {
                 }
             }
         } else {
-            dto.otevrena_biopsie = 'yes'
+            if (!dto.otevrena_biopsie) dto.otevrena_biopsie = 'yes'
             dto.otevrena_vysledek = histologyKey
             if (subtypeKey && histologyKey) {
                 const subtypeField =
