@@ -173,5 +173,8 @@
     "ml-retraining-recommended-body": "Patient count has grown by 10% since last training. Retrain all 4 models?",
     "ml-retrain-all": "Retrain all",
     "ml-retraining-queue-progress": "Training {{current}}/{{total}}",
-    "ml-retraining-queue-complete": "Retraining complete ({{total}} models)"
+    "ml-retraining-queue-complete": "Retraining complete ({{total}} models)",
+    "age_at_diagnosis": "Age at diagnosis",
+    "lymphatic_invasion": "Lymphatic invasion",
+    "perineural_invasion": "Perineural invasion"
 }

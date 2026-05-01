@@ -175,5 +175,8 @@
     "ml-retraining-recommended-body": "Počet pacientů vzrostl o 10 % od posledního trénování. Přetrénovat všechny 4 modely?",
     "ml-retrain-all": "Přetrénovat vše",
     "ml-retraining-queue-progress": "Trénování {{current}}/{{total}}",
-    "ml-retraining-queue-complete": "Přetrénování dokončeno ({{total}} modely)"
+    "ml-retraining-queue-complete": "Přetrénování dokončeno ({{total}} modely)",
+    "age_at_diagnosis": "Věk při diagnóze",
+    "lymphatic_invasion": "Lymfatická invaze",
+    "perineural_invasion": "Perineurální invaze"
 }
