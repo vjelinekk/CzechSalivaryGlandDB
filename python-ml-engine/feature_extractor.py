@@ -16,13 +16,19 @@ from ml_types import Patient, ModelTypeEnum
 class FeatureExtractor:
     """Extracts and preprocesses clinical features from patient records"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        use_binary_features: bool = True,
+        numeric_features_override: list[str] | None = None,
+    ):
         self.feature_names = []
         self.numeric_features = []
         self.categorical_features = []
         self.binary_features = []
         self.imputer_numeric = None
         self.scaler = None
+        self.use_binary_features = use_binary_features
+        self.numeric_features_override = numeric_features_override
 
     def fit_transform(self, patients: list[Patient], model_type: ModelTypeEnum = ModelTypeEnum.OVERALL_SURVIVAL):
         """
@@ -89,23 +95,25 @@ class FeatureExtractor:
         6. perineural_invasion (binary: 'yes'/'no'/None)
         7. extranodal_extension (binary: 'yes'/'no'/None)
         """
-        # 4 numeric features (age, node count, and two ordinal clinical features)
-        self.numeric_features = [
-            'age_at_diagnosis',
-            'positive_node_count',
-            't_stage',   # ordinal: T1=1, T2=2, T3=3, T4=4  (derived by _apply_stage_fallback)
-            'grade',     # ordinal: Stage I=1 … Stage IVC=6  (derived by _apply_stage_fallback)
-        ]
+        # Numeric features — overridable via numeric_features_override
+        if self.numeric_features_override is not None:
+            self.numeric_features = list(self.numeric_features_override)
+        else:
+            self.numeric_features = [
+                'age_at_diagnosis',
+                'positive_node_count',
+                't_stage',   # ordinal: T1=1, T2=2, T3=3, T4=4  (derived by _apply_stage_fallback)
+                'grade',     # ordinal: Stage I=1 … Stage IVC=6  (derived by _apply_stage_fallback)
+            ]
 
-        # No categorical (OHE) features — t_stage and grade are now ordinal numerics
+        # No categorical (OHE) features — t_stage and grade are ordinal numerics
         self.categorical_features = []
 
-        # 3 binary features
-        self.binary_features = [
-            'lymphatic_invasion',
-            'perineural_invasion',
-            'extranodal_extension',
-        ]
+        # 3 binary features (omitted when use_binary_features=False)
+        self.binary_features = (
+            ['lymphatic_invasion', 'perineural_invasion', 'extranodal_extension']
+            if self.use_binary_features else []
+        )
 
     def _extract_numeric(self, df, fit=False):
         """Extract and preprocess numeric and binary features"""
