@@ -176,5 +176,8 @@
     "ml-retraining-queue-complete": "Retraining complete ({{total}} models)",
     "age_at_diagnosis": "Age at diagnosis",
     "lymphatic_invasion": "Lymphatic invasion",
-    "perineural_invasion": "Perineural invasion"
+    "perineural_invasion": "Perineural invasion",
+    "ml-1-year": "1 year",
+    "ml-3-years": "3 years",
+    "ml-5-years": "5 years"
 }
