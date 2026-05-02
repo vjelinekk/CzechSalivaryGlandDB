@@ -176,5 +176,8 @@
     "ml-retraining-recommended-body": "Počet pacientov vzrástol o 10 % od posledného trénovania. Pretrénovať všetky 4 modely?",
     "ml-retrain-all": "Pretrénovať všetko",
     "ml-retraining-queue-progress": "Trénovanie {{current}}/{{total}}",
-    "ml-retraining-queue-complete": "Pretrénovanie dokončené ({{total}} modely)"
+    "ml-retraining-queue-complete": "Pretrénovanie dokončené ({{total}} modely)",
+    "ml-1-year": "1 rok",
+    "ml-3-years": "3 roky",
+    "ml-5-years": "5 rokov"
 }

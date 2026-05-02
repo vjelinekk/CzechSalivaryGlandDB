@@ -496,7 +496,9 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
                                         </Typography>
                                         {[
                                             {
-                                                label: '1 rok',
+                                                label: t(
+                                                    appTranslationKeys.ml1Year
+                                                ),
                                                 value:
                                                     modelType ===
                                                     'overall_survival'
@@ -504,7 +506,9 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
                                                         : result.recurrence_free_probability_1year,
                                             },
                                             {
-                                                label: '3 roky',
+                                                label: t(
+                                                    appTranslationKeys.ml3Years
+                                                ),
                                                 value:
                                                     modelType ===
                                                     'overall_survival'
@@ -512,7 +516,9 @@ const PatientRiskCard: React.FC<PatientRiskCardProps> = ({
                                                         : result.recurrence_free_probability_3year,
                                             },
                                             {
-                                                label: '5 let',
+                                                label: t(
+                                                    appTranslationKeys.ml5Years
+                                                ),
                                                 value:
                                                     modelType ===
                                                     'overall_survival'

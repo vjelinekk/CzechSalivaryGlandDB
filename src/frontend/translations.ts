@@ -480,4 +480,7 @@ export enum appTranslationKeys {
     mlRetrainAll = 'ml-retrain-all',
     mlRetrainingQueueProgress = 'ml-retraining-queue-progress',
     mlRetrainingQueueComplete = 'ml-retraining-queue-complete',
+    ml1Year = 'ml-1-year',
+    ml3Years = 'ml-3-years',
+    ml5Years = 'ml-5-years',
 }
