@@ -1,0 +1,18 @@
+\babel@toc {czech}{}\relax 
+\contentsline {section}{\numberline {1}Architektura systému a komponenty}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Přehled systémových vrstev}{2}{subsection.1.1}%
+\contentsline {section}{\numberline {2}Prezentační vrstva --- Frontend (\texttt {src/frontend})}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Struktura adresáře \texttt {src/frontend}}{4}{subsection.2.1}%
+\contentsline {section}{\numberline {3}Aplikační a datová vrstva --- Backend (\texttt {src/backend})}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Datové úložiště a schéma databáze (\texttt {dbManager.ts})}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Repozitáře (\texttt {src/backend/repositories/})}{6}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Služby a utility backendu}{7}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Komunikační vrstva --- IPC (\texttt {src/ipc})}{7}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Struktura rozhraní IPC}{9}{subsection.4.1}%
+\contentsline {section}{\numberline {5}Modul strojového učení --- Python ML Engine (\texttt {python-ml-engine})}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Technologický stoh modulu}{9}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Komponenty modulu}{9}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Kalkulace skóre rizika}{10}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Sestavení a testování}{10}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Build Pipeline}{10}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Testovací sady}{10}{subsection.6.2}%
