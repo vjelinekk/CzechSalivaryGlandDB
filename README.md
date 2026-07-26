@@ -1,240 +1,208 @@
-# Czech Salivary Gland Database
+# Czech Salivary Gland Database (CSGDB)
 
-Czech Salivary Gland Database je nástroj vyvíjený na Západočeské univerizě v Plzni, sloužící k zjednodušení shromažďování a analýze dat pacientů s nádory velkých slinných žláz.
+<p align="center">
+  <img src="docs/user-guide-cz/img/LOGO_splt.png" alt="CSGDB Logo" width="600"/>
+</p>
+
+**Czech Salivary Gland Database** je aplikovaný softwarový nástroj vyvíjený na Západočeské univerzitě v Plzni, sloužící k efektivnímu shromažďování, správě a pokročilé statistické i prognostické analýze dat pacientů s nádory velkých slinných žláz.
+
+---
 
 ## Obsah
 
 - [Uživatelská příručka](#uživatelská-příručka)
   - [Instalace aplikace](#instalace-aplikace)
   - [První spuštění aplikace](#první-spuštění-aplikace)
-  - [Základní popis uživatelského rozhraní aplikace](#základní-popis-uživatelského-rozhraní-aplikace)
-  - [Přidávání pacientů](#přidávání-pacientů)
-  - [Editace dat o pacientovi](#editace-dat-o-pacientovi)
-  - [Mazání pacientů](#mazání-pacientů)
+  - [Základní popis uživatelského rozhraní](#základní-popis-uživatelského-rozhraní)
+  - [Přidávání nového pacienta](#přidávání-nového-pacienta)
+  - [Plánované kontroly](#plánované-kontroly)
+  - [Editace a mazání pacientů](#editace-a-mazání-pacientů)
   - [Vyhledávání a filtrace v seznamu pacientů](#vyhledávání-a-filtrace-v-seznamu-pacientů)
   - [Export pacientů](#export-pacientů)
-  - [Přidávání studií](#přidávání-studií)
-  - [Editace studií](#editace-studií)
-  - [Odebírání pacientů ze studie](#odebírání-pacientů-ze-studie)
-    - [Odebírání pacientů ze studie v části Seznam pacientů](#odebírání-pacientů-ze-studie-v-části-seznam-pacientů)
-    - [Odebírání pacientů ze studie v části Studie](#odebírání-pacientů-ze-studie-v-části-studie)
-  - [Přidávání pacienta do existující studie](#přidávání-pacienta-do-existující-studie)
-  - [Zobrazení křivek přežití/recidivy](#zobrazení-křivek-přežitírecidivy)
+  - [Práce se studiemi](#práce-se-studiemi)
+  - [Zobrazení křivek přežití a recidivy (Kaplan-Meier)](#zobrazení-křivek-přežití-a-recidivy-kaplan-meier)
+  - [Inferenční statistika](#inferenční-statistika)
+  - [Deskriptivní statistika](#deskriptivní-statistika)
+  - [Prognostický modul (Predikce rizik ML)](#prognostický-modul-predikce-rizik-ml)
   - [Importování dat](#importování-dat)
-  - [Prognostický modul](#prognostický-modul)
-    - [Výpočet predikce](#výpočet-predikce)
-    - [Trénování modelu](#trénování-modelu)
-    - [Informace o modelech](#informace-o-modelech)
+  - [Zálohování a obnova databáze](#zálohování-a-obnova-databáze)
 - [Vlastní překlad zdrojového kódu](#vlastní-překlad-zdrojového-kódu)
 - [Licence](#licence)
 
+---
 
 ## Uživatelská příručka
 
+Kompletní vysázenou příručku ve formátu PDF naleznete v [docs/user-guide-cz/user-guide-cz.pdf](docs/user-guide-cz/user-guide-cz.pdf).
+
 ### Instalace aplikace
 
-1. Stáhněte [instalační soubor](https://github.com/vjelinekk/CzechSalivaryGlandDB_v2/releases/download/v1.0.0/csgdb-1.0.0-Setup.exe).
-2. Spusťte instalační soubor `csgdb-1.0.0-Setup.exe`.
-3. Ve vyskakovacím okně postupujte podle následujícího obrázku:
-4. ![](/readme_images/instalace.jpg)
-5. Nyní je aplikace nainstalována pod názvem `csgdb`.
+1. Stáhněte si nejnovější instalační soubor z oficiální stránky [GitHub Releases](https://github.com/vjelinekk/CzechSalivaryGlandDB/releases) (případně přímo z vydání [v3.0.9](https://github.com/vjelinekk/CzechSalivaryGlandDB/releases/tag/v3.0.9)).
+2. Spusťte stažený instalační soubor (např. `csgdb-3.0.9-Setup.exe`).
+3. V průběhu instalace postupujte podle pokynů v instalačním okně:
+   ![Průběh instalace](docs/user-guide-cz/img/instalace.jpg)
+4. Po dokončení instalace je aplikace nainstalována a připravena k použití pod názvem `csgdb`.
 
 ### První spuštění aplikace
 
 1. Spusťte aplikaci `csgdb`.
-2. Po spuštění je zobrazeno následující dialogové okno:
-3. ![](/readme_images/volba_zabezpeceni.png)
-4. Nyní volíte zda chcete využívat zabezpečenou verzi aplikace a máte dvě možnosti:
-    - _Ano_: možnost zvolte pokud plánujete do aplikace ukládat reálná data o pacientech.
-    - _Ne_: možnost zvolte pouze v případě, že aplikaci chcete jen testovat a nebudete ukládat reálná data.
-5. V případě, že jste zvolili možnost _Ano_ je Vám nyní zobrazeno toto dialogové okno:
-6. ![](/readme_images/login_form_phase_2.png)
-7. V dialogovém okně si nastavte heslo pomocí, kterého se budete do aplikace při každém jejím spuštění přihlašovat. **Heslo nesmíte zapomenout jinak přijdete o přístup k datům.**
-8. Dále je pro Vás vygenerován šifrovací klíč. Ten si uschovejte na bezpečné místo. **V případě ztráty šifrovacího klíče nebude možné zobrazit osobní údaje o pacientech.**
-9. Nyní už jen stačí kliknout na tlačítko _Přihlásit se_.
+2. Při prvním spuštění zvolte v dialogovém okně režim zabezpečení:
+   ![Volba zabezpečení](docs/user-guide-cz/img/volba_zabezpeceni.png)
+   - **Ano**: Zvolte, pokud budete do aplikace ukládat reálná data pacientů (citlivá osobní data budou šifrována).
+   - **Ne**: Zvolte pouze pro účely testování.
+3. V případě volby **Ano** nastavte přístupové heslo a bezpečně uschovejte vygenerovaný šifrovací klíč:
+   ![Vygenerování klíče a hesla](docs/user-guide-cz/img/vytvoreni_hesla.png)
+4. Dokončete nastavení kliknutím na tlačítko *Přihlásit se*.
 
-### Základní popis uživatelského rozhraní aplikace
+> **DŮLEŽITÉ UPOZORNĚNÍ K BEZPEČNOSTI DAT**
+> - **Heslo nesmíte zapomenout** – bez hesla se do aplikace nepřihlásíte a přístup k datům bude zablokován.
+> - **Šifrovací klíč uschovejte na bezpečném místě** – bez klíče nelze dešifrovat osobní údaje o pacientech.
 
-![](/readme_images/layout.png)
+### Základní popis uživatelského rozhraní
 
--   V levé části okna aplikace se nachází menu pomocí, kterého můžete zobrazovat jednotlivé funkcionality aplikace.
--   Po zvolení některé z možností v menu jsou zobrazeny všechny prvky, patřící této části, v centrální části okna aplikace.
+Okno aplikace je rozděleno do tří hlavních částí:
+![Rozvržení rozhraní](docs/user-guide-cz/img/rozhrani.png)
 
-### Přidávání pacientů
+1. **Levé navigační menu**: Přepínání mezi moduly pacientů, studií, statistiky, prognóz, importu a zálohování (včetně možnosti změny jazyka).
+2. **Střední panel (Ovládací a seznamový)**: Vyhledávací pole, tlačítka filtrace, tlačítka exportu a seznam vybraných záznamů.
+3. **Pravý panel (Pracovní plocha)**: Zobrazení karty pacienta, formulářů, grafů a výsledků statistických výpočtů.
 
-1. Nejprve v menu klikněte na tlačítko _Přidat pacienta_.
-2. Následně jsou zobrazena tři tlačítka, která vám umožňují zvolit, kterou ze tří žláz má pacient postiženou:
-3. ![](/readme_images/tvorba_pacienta_1.png)
-4. Po zvolení žlázy je zobrazen formulář:
-5. ![](/readme_images/form_1.png)
-6. Nyní můžete vyplňovat jednotlivé údaje o pacientovi.
-7. Jakmile budete chtít přidat pacienta do databáze musíte nejprve dojít na konec formuláře, kde naleznete tlačítko _Přidat pacienta_.
-8. Po stisknutí tlačítka _Přidat pacienta_ budete přesunuti do _Seznamu pacientů_ a Vámi nově přidaný pacient bude vybrán:
-9. ![](/readme_images/tvorba_pacienta_2.png)
+### Přidávání nového pacienta
 
-### Editace dat o pacientovi
+1. V levém menu klikněte na tlačítko **Přidat pacienta**.
+2. Zvolte charakter nádoru (**Nezhoubný nádor** / **Zhoubný nádor**):
+   ![Volba typu nádoru](docs/user-guide-cz/img/pridani-pacienta/pridani_1.png)
+3. Zvolte postiženou slinnou žlázu (**Příušní**, **Podčelistní**, **Podjazyková**):
+   ![Výběr žlázy](docs/user-guide-cz/img/pridani-pacienta/pridani_2.png)
+4. Vyplňte generovaný formulář osobních, demografických a klinických dat:
+   ![Formulář pacienta](docs/user-guide-cz/img/pridani-pacienta/pridani_3.png)
+5. Na konci formuláře klikněte na tlačítko **Přidat pacienta**. Pacient bude uložen a budete přesměrováni do seznamu pacientů.
 
-1. Pokud chcete editovat data o pacientovi musíte se přesunout do části _Seznam pacientů_ nebo _Studie_ (kde máte zobrazený seznam pacientů ve studii) a zde najít konkrétního pacienta.
-2. Zde zvolíte, kterého pacienta chcete editovat.
-3. Následně umožníte editaci stisknutím tlačítka _Editovat_, které se nachází v pravém horním rohu:
-4. ![](/readme_images/editace_pacienta.png)
-5. Nyní můžete libovolně editovat údaje o zvoleném pacientovi.
-6. V případě, že chcete provedené změny uložit stiskněte tlačítko _Uložit změny_. Jestliže změny nechcete uložit stačí stisknout tlačítko _Zrušit editaci_.
-7. ![](/readme_images/pacient_edit.png)
+### Plánované kontroly
 
-### Mazání pacientů
+Modul pro přehlednou časovou evidenci a plánování nadcházejících kontrol pacientů.
 
-1. Pokud chcete smazat pacienta musíte se nacházet v části _Seznam pacientů_ nebo _Studie_, kde máte zobrazený seznam pacientů ve studii.
-2. Následně zvolte pacienta, kterého chcete smazat a klikněte na tlačítko _Smazat pacienta_ v pravém horním rohu.
-3. ![](/readme_images/editace_pacienta.png)
-4. Po kliknutí na toto tlačítko je Vám zobrazeno dialogové okno, které se ptá na to, zda opravdu chce pacienta smazat:
-5. ![](/readme_images/potvrzeni_mazani_pacienta.png)
-6. Poté, co kliknete na tlačítko _SMAZAT_ bude pacient odstraněn z databáze.
+1. V levém menu klikněte na **Plánované kontroly**.
+2. Nastavte požadovaný časový rozsah v polích **Od** a **Do**.
+3. Na ploše se zobrazí kalendářové karty rozdělené podle dnů s evidovanými kontrolami:
+   ![Plánované kontroly](docs/user-guide-cz/img/planovane-kontroly/planovane_kontroly_1.png)
+4. Pomocí modrého tlačítka **EXPORT PDF** v pravém horním rohu můžete vytisknout nebo uložit dokument ve formátu PDF.
+
+### Editace a mazání pacientů
+
+1. V **Seznamu pacientů** nebo ve **Studii** vyberte požadovaného pacienta.
+2. V pravém horním rohu pracovní plochy stiskněte modré tlačítko s ikonou tužky a vyberte **EDITOVAT**:
+   ![Režim editace](docs/user-guide-cz/img/editace-pacienta/edit_1.png)
+   ![Možnosti akcí](docs/user-guide-cz/img/editace-pacienta/edit_2.png)
+3. Po úpravě údajů stiskněte **ULOŽIT ZMĚNY** (případně **ZRUŠIT EDITACI**). Pro trvalé odstranění stiskněte **SMAZAT PACIENTA**:
+   ![Uložení změn a mazání](docs/user-guide-cz/img/editace-pacienta/edit_3.png)
 
 ### Vyhledávání a filtrace v seznamu pacientů
 
--   Pokud se nacházíte v části aplikace _Seznam pacientů_ nebo _Studie_, kde máte zobrazený seznam pacientů, ve studii můžete vyhledávat pacienta podle **jména, příjmení a rodného čísla** pomocí vstupního pole, které je označeno názvem _Vyhledat..._:
--   ![](/readme_images/seznam_detail.png)
--   Dále je možné filtrovat pacienty pomocí kliknutím na tlačítko _Filtrovat_
-    -   To Vám zobrazí filtrační menu:
-    -   ![](/readme_images/filtracni_menu.png)
-    -   V tomto menu můžete nastavit, podle jakých hodnot chcete pacienty filtrovat, a následně kliknutím na tlačítko _ULOŽIT FILTR_ se aplikuje vámi nastavený filtr.
-    -   Pokud chcete filtr smazat, stačí kliknout na tlačítko _RESETOVAT FILTR_
+- **Rychlé vyhledávání**: Pomocí pole *Vyhledat...* v reálném čase podle jména, příjmení nebo rodného čísla:
+  ![Rychlé vyhledávání](docs/user-guide-cz/img/vyhledavani-a-filtrace/vyhledavani_a_filtrace_1.png)
+- **Pokročilá filtrace**: Stisknutím tlačítka **FILTROVAT** otevřete postranní menu pro komplexní nastavení kritérií:
+  ![Filtrační menu](docs/user-guide-cz/img/vyhledavani-a-filtrace/vyhledavani_a_filtrace_2.png)
+  - Pro aplikaci filtru klikněte na zelené tlačítko **ULOŽIT FILTR**.
+  - Pro zrušení filtru klikněte na oranžové tlačítko **RESETOVAT FILTR**.
 
 ### Export pacientů
 
-1. Musíte se nacházet v části _Seznam pacientů_ nebo _Studie_, kde máte otevřený seznam pacientů v dané studii.
-2. Nyní musíte zvolit pacienty pro export a to buď klikáním na boxy u jednotlivých pacientů, nebo v případě exportu všech pacientů v seznamu stisknutím tlačítka _Označit vše_:
-3. ![](/readme_images/seznam_detail.png)
-4. Po zvolení pacientů pro export si můžete vybrat mezi normálním a anonymizovaným exportem.
-5. Kliknutím na jedno z těchto tlačítek se Vám zobrazí dialogové okno vygenerované Vaším operačním systémem, ve kterém nadefinujete adresář kam chcete exportovaná data uložit.
-6. Následně jsou data uložena do Vámi určeného adresáře ve formátu `.xls`. A pro každý typ žlázy je vytvořen jeden soubor.
+1. V seznamu pacientů označte záznamy (ručně zaškrtnutím nebo tlačítkem **OZNAČIT VŠE**).
+2. V horním panelu zvolte požadovaný typ exportu:
+   ![Export pacientů](docs/user-guide-cz/img/export/export_1.png)
+   - **Exportovat**: Standardní export všech údajů do Excelu (`.xls`).
+   - **Exportovat anonymizovaně**: Export bez osobních identifikátorů.
+3. Zvolte cílovou složku. Pro každý typ žlázy je automaticky vygenerován samostatný soubor `.xls`.
 
-### Přidávání studií
+### Práce se studiemi
 
-1. Přesuňte se do části menu _Přidat studii_.
-2. Nyní můžete zvolit pro, kterou žlázu chcete studii vytvořit (speciální studie může obsahovat všechny žlázy):
-3. ![](/readme_images/volba_studie.png)
-4. Po tom, co provedete volbu typu studie, bude vám zobrazen seznam pacientů, které je možné do daného typu studie zařadit:
-5. ![](/readme_images/tvorba_studie.png)
-6. Nyní můžete zvolit klikáním na boxy u jednotlivých pacientů nebo tlačítkem _Označit vše_ pacienty, které chcete vložit do studie.
-7. Následně zadejte název studie do vstupního pole a klikněte na tlačítko _Vytvořit novou studii_
-8. To Vás přenese do části _Studie_ a vybere Vámi vytvořenou novou studii:
-9. ![](/readme_images/nova_studie.png)
+- **Vytvoření nové studie**: V menu zvolte **Přidat studii**, vyberte cílovou žlázu (nebo speciální studii), zadejte název, zaškrtněte pacienty a stiskněte **VYTVOŘIT NOVOU STUDII**:
+  ![Výběr typu studie](docs/user-guide-cz/img/pridani-studie/pridani_1.png)
+  ![Vytvoření studie](docs/user-guide-cz/img/pridani-studie/pridani_2.png)
+- **Editace a mazání studie**: V záložce **Studie** použijte ikonu tužky pro přejmenování nebo ikonu popelnice pro smazání studie:
+  ![Změna názvu studie](docs/user-guide-cz/img/editace-studie/editace_1.png)
+  ![Režim úpravy názvu](docs/user-guide-cz/img/editace-studie/editace_2.png)
+- **Přidání pacienta do studie**: Přímo v kartě pacienta v sekci **Studie** zaškrtněte požadované studie a uložte změny:
+  ![Zařazení z karty pacienta](docs/user-guide-cz/img/pridani-do-studie/pridani_1.png)
 
-### Editace studií
+### Zobrazení křivek přežití a recidivy (Kaplan-Meier)
 
--   Pokud chcete editovat studii, musíte se nacházet v části _Studie_.
--   Zde pomocí tlačítka s ikonou tužky můžete měnit název studie a pomocí tlačítka s ikonou koše můžete smazat studii:
--   ![](/readme_images/studie_edit.png) 
-- V případě editace názvu studie se místo aktuálního názvu zobrazí vstupní pole, do kterého můžete zadat nový název: 
-- ![](/readme_images/editace_studie_2.png) 
-- Stisknutím tlačítka s ikonou _fajfky_ uložíte nový název a kliknutím na tlačítko s ikonou křížku zrušíte editaci názvu studie. 
-- Pokud kliknete na tlačítko s ikonou koše, zobrazí se Vám dialogové okno, které Vás žádá o potvrzení smazání studie: 
-- ![](/readme_images/mazani_studie.png) 
-- Pokud kliknete na tlačítko _SMAZAT_, bude studie odstraněna z databáze.
+1. V menu přejděte do části **Kaplan-Meier**.
+2. Zvolte typ analýzy (přežití / recidiva) a definujte srovnávané histopatologické skupiny:
+   ![Modul Kaplan-Meier](docs/user-guide-cz/img/kaplan-meier/kaplan_meier_1.png)
+3. Aplikace automaticky vykreslí Kaplan-Meierovy křivky nad pacienty s kompletními daty.
 
-### Odebírání pacientů ze studie
+### Inferenční statistika
 
--   Pacienty můžete odebírat ze studie jak v části _Seznam pacientů_, tak v části _Studie_.
+Modul pro statistické testování hypotéz a ověřování závislostí mezi proměnnými:
 
-#### Odebírání pacientů ze studie v části _Seznam pacientů_
+1. V menu přejděte do záložky **Inferenční statistika**.
+2. Zvolte požadovaný test (**Chi-kvadrát test**, **Fisherův exaktní test**, **T-Test**, **Mann-Whitney U test**), velikost kontingenční matice a verzi TNM (TNM8 / TNM9):
+   ![Volba testu a parametrů](docs/user-guide-cz/img/inferencni-statistika/inf_stat_1.png)
+3. Definujte řádkové a sloupcové kategorie výběrem klinických proměnných:
+   ![Řádkové kategorie](docs/user-guide-cz/img/inferencni-statistika/inf_stat_2.png)
+   ![Sloupcové kategorie](docs/user-guide-cz/img/inferencni-statistika/inf_stat_3.png)
+4. Nastavte hladinu významnosti (např. 5 %) a stisknutím tlačítka **VYPOČÍTAT CHI-KVADRÁT** spuste výpočet p-hodnoty a testové statistiky:
+   ![Kontingenční matice a výpočet](docs/user-guide-cz/img/inferencni-statistika/inf_stat_4.png)
 
-1. Přejděte do části _Seznam pacientů_
-2. Vyberte pacienta, kterého chcete odebrat z nějaké studie.
-3. Dojděte na konec formuláře pacienta.
-4. Klikněte na tlačítko _Editovat_ v pravém horním rohu.
-5. V části formuláře _Studie_ odeberte vybrané studie, u kterých nechcete, aby byl pacient jejich součástí:
-6. ![](/readme_images/sezna_odebrani_ze_studie.png)
-7. Následně klikněte na tlačítko _Uložit změny_ v pravém horním rohu a pacient bude odstraněn z vybraných studií.
+### Deskriptivní statistika
 
-#### Odebírání pacientů ze studie v části _Studie_
+Modul pro základní sumarizační přehled a popis datového souboru pacientů v databázi (distribuce věku, pohlaví, typů nádorů a stadií TNM).
 
-1. Přejděte do části _Studie_.
-2. Vyberte studii, ze které chcete pacienty odebrat.
-3. V seznamu pacientů dané studie vyberte pacienta, kterého chcete odebrat.
-4. Zobrazte si formulář pacienta kliknutím na něj.
-5. V pravém horním rohu klikněte na tlačítko _Odebrat ze studie_:
-6. ![](/readme_images/studie_odebrani_pacienta.png)
-7. Následně se zobrazí dialogové okno, které vyžaduje potvrzení odebrání pacienta ze studie:
-8. ![](/readme_images/odebrat_ze_studie.png)
-9. Kliknutím na tlačítko _ODEBRAT_ bude pacient odebrán ze studie.
+### Prognostický modul (Predikce rizik ML)
 
-### Přidávání pacienta do existující studie
+Využívá algoritmy strojového učení (*Random Survival Forest*, *Cox PH*) pro odhad rizikového skóre:
 
-1. Přejděte do části _Seznam pacientů_.
-2. Vyberte pacienta, kterého chcete přidat do existující studie.
-3. Dojděte na konec formuláře vybraného pacienta a klikněte na tlačítko _Editovat_ v pravém horním rohu:
-4. ![](/readme_images/pridani_do_ex_studie.png)
-5. V části formuláře _Studie_ vyberte studii/studie, do kterých chcete pacienta přidat.
-6. Klikněte na tlačítko _Uložit změny_ pro přidání pacienta do studie/studií.
-
-### Zobrazení křivek přežití/recidivy
-
-1. Přejděte do části _Kaplan-Meier_.
-2. Vyberte typ křivky a histopatologické typy nádoru, pro které chcete zobrazit křivku:
-3. ![](/readme_images/kaplan-meier.png)
-4. Po zvolení typu křivky a určení skupin podle histopatologického typu nádoru jsou vykresleny křivky pomocí Kaplan-Meierovy metody.
-5. Křivky jsou vykresleny jenom pro pacienty, kteří mají definovaný:
-    - v případě křivky přežití: _Histopatologie_, _Rok diagnózy_ a _Datum úmrtí_,
-    - v případě křivky recidivy: _Histopatologie_, _Rok diagnózy_ a _Datum prokázání recidivy_.
+- **Výpočet predikce**: Na kartě pacienta klikněte na ikonu hlavy s ozubeným kolem, zvolte cílovou proměnnou a spuste výpočet:
+  ![Ikona predikce](docs/user-guide-cz/img/prognosticky-modul/predikce_vypocet_1.png)
+  ![Nastavení predikce](docs/user-guide-cz/img/prognosticky-modul/predikce_vypocet_2.png)
+  ![Výsledky predikce](docs/user-guide-cz/img/prognosticky-modul/predikce_vypocet_3.png)
+- **Trénování nového modelu**: V záložce **Predikce rizik (ML)** natrénujte vlastní model nad aktuálními daty v databázi:
+  ![Trénování modelu](docs/user-guide-cz/img/prognosticky-modul/predikce_trenink_1.png)
+  ![Výsledné metriky tréninku](docs/user-guide-cz/img/prognosticky-modul/predikce_trenink_2.png)
+- **Správa modelů**: Přehled natrénovaných i předtrénovaných modelů a nastavení jejich aktivity:
+  ![Správa modelů](docs/user-guide-cz/img/prognosticky-modul/predikce_info.png)
 
 ### Importování dat
 
-1. Klikněte na tlačítko _Importovat data_ v menu aplikace.
-2. Následně se zobrazí dialogové okno vygenerované operačním systémem, pomocí kterého určíte soubor, ze kterého chcete importovat data.
-3. Po zvolení souboru se provede import dat.
+1. V menu klikněte na **Importovat data**.
+2. Zvolte datový soubor v dialogovém okně operačního systému.
+3. Data budou automaticky zpracována a importována do databáze.
 
-### Prognostický modul
+### Zálohování a obnova databáze
 
-#### Výpočet predikce
-1. Přejděte do části _Seznam pacientů_.
-2. Vyberte pacienta, pro kterého chcete vypočítat prognostické skóre
-3. Klikněte na ikonu hlavy s ozubeným kolečkem v pravém horním rohu:
-4. ![](/readme_images/predikce_vypocet_1.png)
-5. Vyberte jaký typ predikce, chcete vypočítat:
-6. ![](/readme_images/predikce_vypocet_2.png)
-7. Klikněte na tlačítko _Vypočítat riziko_
-8. Provede se výpočet a uvidíte výsledek:
-9. ![](/readme_images/predikce_vypocet_3.png)
+- **Zálohování databáze**: Kliknutím na položku **Zálohovat databázi** v menu a zvolením cílové složky uložíte kompletní kopii databáze (soubor `.sqlite`).
+- **Obnovení databáze ze zálohy**: Kliknutím na položku **Obnovit databázi** vyberete záložní soubor `.sqlite`, kterým nahradíte stávající databázi.
 
-#### Trénování modelu
-1. Přejděte do části _Predikce rizik (ML)_
-2. Vyberte jaký model chcete trénovat:
-3. ![](/readme_images/predikce_trenink_1.png)
-4. Spusťte trénink pomocí tlačítka _Trénovat model_
-5. Po dokončení tréninku je zobrazen výsledek trénovaní:
-6. ![](/readme_images/predikce_trenink_2.png)
-
-#### Informace o modelech
-1. Přejděte do části _Predikce rizik (ML)_
-2. Překliněte se na záložku _Informace o modelech_
-3. ![](/readme_images/predikce_info.png)
-4. Zde je vidět seznam všech natrénovaných a aktivních modelů
+---
 
 ## Vlastní překlad zdrojového kódu
-1. Pokud již nemáte, nejprve musíte nainstalovat [`NodeJS`](https://nodejs.org/en/download). Zároveň s `NodeJS` bude automatický nainstalováno `NPM`.
-2. Ověření úspěšné instalace, lze provést pomocí příkazu:
-> npm --version
+
+1. Pokud již nemáte, nejprve musíte nainstalovat [`Node.js`](https://nodejs.org/en/download). Zároveň s `Node.js` bude automaticky nainstalováno `NPM`.
+2. Ověření úspěšné instalace lze provést pomocí příkazu:
+   ```bash
+   npm --version
+   ```
 3. Přejděte do složky `python-ml-engine` a spusťte skript `build.sh`:
-> cd python-ml-engine && bash build.sh
-
-> cd ..
-
-> mkdir ml_engine
-
-> mv python-ml-engine/dist/ml_engine.exe ml_engine/
+   ```bash
+   cd python-ml-engine && bash build.sh
+   cd ..
+   mkdir -p ml_engine
+   mv python-ml-engine/dist/ml_engine.exe ml_engine/
+   ```
 4. Nainstalujte potřebné knihovny pomocí příkazu:
-> npm install
+   ```bash
+   npm install
+   ```
 5. Přeložte zdrojový kód pomocí příkazu:
-> npm run make
-6. Ve složce `out` jsou nyní vygenerovány dva adresáře:
-  - `csgdb-win32-x64`
-    - Adresář obsahuje sestavený soubor `csgdb.exe`, který lze spustit.
-  - `make`
-    - Adresář na cestě `\make\squirrel.windows\x64\` obsahuje instalační soubory aplikace.
+   ```bash
+   npm run make
+   ```
+6. Ve složce `out` jsou nyní vygenerovány adresáře se sestavenou aplikací a instalačními balíčky.
+
+---
 
 ## Licence
-Software je licencován pod [GNU General Public License V3](./LICENSE)
 
- 
+Software je licencován pod [GNU General Public License V3](./LICENSE).
