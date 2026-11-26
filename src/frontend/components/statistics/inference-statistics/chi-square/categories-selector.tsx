@@ -91,10 +91,12 @@ const CategoriesSelector: React.FC<CategoriesSelectorProps> = ({
             // Ensure the category index exists
             if (!updatedCategories[categoryIndex]) {
                 updatedCategories[categoryIndex] = Object.fromEntries(
-                    Object.values(InferenceChiSquareCategories).map((key) => [
-                        key,
-                        [],
-                    ])
+                    Object.values(InferenceChiSquareCategories).map(
+                        (key): [InferenceChiSquareCategories, string[]] => [
+                            key,
+                            [],
+                        ]
+                    )
                 ) as Record<InferenceChiSquareCategories, string[]>
             }
 

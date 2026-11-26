@@ -264,4 +264,4 @@ The app is primarily in Czech:
 
 ## Node.js Version
 
-The application requires Node.js 18.20.7 as specified in `package.json` engines.
+The application requires the Node.js version pinned in `.nvmrc` (mirrored in `package.json` engines).

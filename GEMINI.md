@@ -34,7 +34,7 @@ The application is built using **Electron** and **React**, ensuring cross-platfo
 
 ### Prerequisites
 
--   Node.js (v18.20.7 recommended)
+-   Node.js (version pinned in `.nvmrc`)
 -   NPM
 
 ### Commands

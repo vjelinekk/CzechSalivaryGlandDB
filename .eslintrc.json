@@ -14,5 +14,40 @@
         "plugin:import/typescript",
         "prettier"
     ],
-    "parser": "@typescript-eslint/parser"
+    "parser": "@typescript-eslint/parser",
+    // Keep the rule set of typescript-eslint v5 "recommended" after the v8 upgrade.
+    // ban-types and no-empty-interface are covered by their v8 "recommended"
+    // replacements (no-empty-object-type, no-unsafe-function-type,
+    // no-wrapper-object-types); no-loss-of-precision by the core rule.
+    "rules": {
+        // v8 raised these from "warn" to "error" and changed caughtErrors default to "all".
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            { "caughtErrors": "none" }
+        ],
+        // v8 moved these out of "recommended" (to "stylistic" / "strict").
+        "@typescript-eslint/adjacent-overload-signatures": "error",
+        "@typescript-eslint/no-empty-function": "error",
+        "@typescript-eslint/no-inferrable-types": "error",
+        "@typescript-eslint/no-non-null-assertion": "warn",
+        // v8 replaced no-var-requires with the stricter no-require-imports.
+        "@typescript-eslint/no-var-requires": "error",
+        "@typescript-eslint/no-require-imports": "off",
+        // Added to "recommended" in v8.
+        "@typescript-eslint/no-unused-expressions": "off",
+        "@typescript-eslint/no-duplicate-enum-values": "off",
+        "@typescript-eslint/no-unsafe-declaration-merging": "off"
+    },
+    "overrides": [
+        {
+            // Core rules whose state v8 "eslint-recommended" flipped for TS files.
+            "files": ["*.ts", "*.tsx", "*.mts", "*.cts"],
+            "rules": {
+                "no-class-assign": "error",
+                "no-with": "error",
+                "valid-typeof": "off"
+            }
+        }
+    ]
 }
